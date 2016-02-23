@@ -1,0 +1,5 @@
+# Default behaviour, for users core.autocrlf not set
+* text=auto
+
+msvs-detect text eol=lf
+msvs-promote-path text eol=lf
