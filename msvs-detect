@@ -623,7 +623,11 @@ for i in "${!COMPILERS[@]}" ; do
         if [[ -n $INSTALL_DIR ]] ; then
           if [[ ${TEST_PATH%/} = $(cygpath -u "$INSTALL_DIR\\..\\Tools") ]] ; then
             RESULT=${COMPILERS[$i]%)}
-            FOUND+=(["$i"]="$RESULT [\"IS_EXPRESS\"]=\"$EXPRESS\")")
+            DISPLAY=${COMPILER["NAME"]}
+            if [[ $EXPRESS -eq 1 ]] ; then
+              DISPLAY="$DISPLAY Express"
+            fi
+            FOUND+=(["$i"]="$RESULT [\"DISPLAY\"]=\"$DISPLAY\" [\"IS_EXPRESS\"]=\"$EXPRESS\")")
             debug "${COMPILER["NAME"]} accepted for further detection"
           else
             warning "$ENV doesn't agree with registry"
@@ -642,7 +646,7 @@ for i in "${!COMPILERS[@]}" ; do
       TEST_PATH=$(cygpath -u "$INSTALL_DIR")
       if [[ -e $TEST_PATH/SetEnv.cmd ]] ; then
         RESULT=${COMPILERS[$i]%)}
-        FOUND+=(["$i"]="$RESULT [\"SETENV\"]=\"$INSTALL_DIR\\SetEnv.cmd\")")
+        FOUND+=(["$i"]="$RESULT [\"DISPLAY\"]=\"${COMPILER["NAME"]}\" [\"SETENV\"]=\"$INSTALL_DIR\\SetEnv.cmd\")")
         debug "${COMPILER["NAME"]} accepted for further detection"
       else
         warning "Registry set for Windows Server 2003 SDK, but SetEnv.cmd not found"
@@ -661,9 +665,13 @@ for i in $(reg query "$SDK_ROOT" 2>/dev/null | fgrep "Windows\v" | sed -e 's/.*\
     if [[ -e $TEST_PATH/Bin/SetEnv.cmd ]] ; then
       if [[ -z ${COMPILERS["SDK${i#v}"]+x} ]] ; then
         warning "SDK $i is not known to this script - assuming compatibility"
+        DISPLAY="Windows SDK $i"
+      else
+        eval COMPILER=${COMPILERS["SDK${i#v}"]}
+        DISPLAY=${COMPILER['NAME']}
       fi
       RESULT=${COMPILERS['SDK']%)}
-      FOUND+=(["SDK${i/v/}"]="$RESULT [\"SETENV\"]=\"$INSTALL_DIR\\Bin\\SetEnv.cmd\")")
+      FOUND+=(["SDK${i/v/}"]="$RESULT [\"DISPLAY\"]=\"$DISPLAY\" [\"SETENV\"]=\"$INSTALL_DIR\\Bin\\SetEnv.cmd\")")
     else
       if [[ -n ${COMPILERS["SDK${i#v}"]+x} ]] ; then
         warning "Registry set for Windows SDK $i, but SetEnv.cmd not found"
@@ -1008,6 +1016,7 @@ fi
 
 if [[ -n $SOLUTION ]] ; then
   eval COMPILER=${FOUND[$SOLUTION-$LEFT_ARCH]}
+  output MSVS_NAME "${COMPILER["DISPLAY"]}" $LEFT_ARCH
   output MSVS_PATH "${COMPILER["MSVS_PATH"]}" $LEFT_ARCH
   output MSVS_INC "${COMPILER["MSVS_INC"]}" $LEFT_ARCH
   output MSVS_LIB "${COMPILER["MSVS_LIB"]}" $LEFT_ARCH
