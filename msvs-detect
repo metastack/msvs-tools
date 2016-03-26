@@ -474,13 +474,13 @@ COMPILERS=(
     ["ARCH"]="x86 x64"
     ["ARCH_SWITCHES"]="([\"x86\"]=\"/x86\" [\"x64\"]=\"/x64\")")'
   ["SDK6.1"]='(
-    ["NAME="]="Windows Server 2008 with .NET 3.5 SDK"
+    ["NAME"]="Windows Server 2008 with .NET 3.5 SDK"
     ["VC_VER"]="9.0")'
   ["SDK7.0"]='(
-    ["NAME="]="Windows 7 with .NET 3.5 SP1 SDK"
+    ["NAME"]="Windows 7 with .NET 3.5 SP1 SDK"
     ["VC_VER"]="9.0")'
   ["SDK7.1"]='(
-    ["NAME="]="Windows 7 with .NET 4 SDK"
+    ["NAME"]="Windows 7 with .NET 4 SDK"
     ["VC_VER"]="10.0")'
 )
 
