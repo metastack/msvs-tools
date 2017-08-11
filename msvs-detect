@@ -539,10 +539,8 @@ if [[ $SCAN_ENV -eq 1 ]] ; then
     # reason, use env to determine the actual case of the LIB and INCLUDE variables.
     if [[ -n ${ENV_ARCH+x} ]] ; then
       RET=0
-      ENV_INC=$(env | grep -i "^INCLUDE=")
-      ENV_INC=${ENV_INC%%=*}
-      ENV_LIB=$(env | grep -i "^LIB=")
-      ENV_LIB=${ENV_LIB%%=*}
+      ENV_INC=$(env | sed -ne 's/^\(INCLUDE\)=.*/\1/pi')
+      ENV_LIB=$(env | sed -ne 's/^\(LIB\)=.*/\1/pi')
       if check_environment "${PATH//:/*}" \
                            "${!ENV_INC//;/*}" \
                            "${!ENV_LIB//;/*}" \
