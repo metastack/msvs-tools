@@ -56,14 +56,14 @@ warning ()
 # Retrieves a REG_SZ value from the registry (redirected on WOW64)
 reg_string ()
 {
-  reg query "$1" /v "$2" 2>/dev/null | fgrep "$2" | sed -e "s/ *$2 *REG_SZ *//"
+  reg query "$1" /v "$2" 2>/dev/null | tr -d '\r' | sed -ne "s/ *$2 *REG_SZ *//p"
 }
 
 # reg64_string key value
 # As reg_string, but without WOW64 redirection (i.e. guaranteed access to 64-bit registry)
 reg64_string ()
 {
-  $REG64 query "$1" /v "$2" 2>/dev/null | fgrep "$2" | sed -e "s/ *$2 *REG_SZ *//"
+  $REG64 query "$1" /v "$2" 2>/dev/null | tr -d '\r' | sed -ne "s/ *$2 *REG_SZ *//p"
 }
 
 # find_in list file
@@ -655,7 +655,7 @@ done
 
 # Now enumerate installed SDKs for v6.0+
 SDK_ROOT='HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows'
-for i in $(reg query "$SDK_ROOT" 2>/dev/null | fgrep "Windows\v" | sed -e 's/.*\\//') ; do
+for i in $(reg query "$SDK_ROOT" 2>/dev/null | tr -d '\r' | sed -ne '/Windows\\v/s/.*\\//p') ; do
   debug "Analysing SDK key $SDK_ROOT\\$i"
   INSTALL_DIR=$(reg_string "$SDK_ROOT\\$i" InstallationFolder)
   if [[ -n $INSTALL_DIR ]] ; then
