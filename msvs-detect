@@ -325,7 +325,7 @@ if [[ $MODE -eq 1 ]] ; then
   MSVS_PREFERENCE=
   SCAN_ENV=1
 elif [[ -z ${MSVS_PREFERENCE+x} ]] ; then
-  MSVS_PREFERENCE='@;14.0;12.0;11.0;10.0;9.0;8.0;7.1;7.0'
+  MSVS_PREFERENCE='@;15.0;14.0;12.0;11.0;10.0;9.0;8.0;7.1;7.0'
 fi
 
 MSVS_PREFERENCE=${MSVS_PREFERENCE//;/ }
@@ -404,6 +404,7 @@ esac
 #                    equivalent of the VERSION key)
 #   REG_KEY        - (SDK only) registry key to open to identify this package installation
 #   REG_VALUE      - (SDK only) registry value to query to identify this package installation
+#   VSWHERE        - (VS 2017+) is 1 if the compiler can only be detected using vswhere
 # For a while, Windows SDKs followed a standard pattern which is stored in the SDK element and
 # copied to the appropriate version. SDKs after 7.1 do not include compilers, and so are not
 # captured (as of Visual Studio 2015, the Windows SDK is official part of Visual Studio).
@@ -460,6 +461,9 @@ COMPILERS=(
     ["ENV"]="140"
     ["VERSION"]="14.0"
     ["ARCH"]="x86 x64")'
+  ["VS15.0"]='(
+    ["NAME"]="Visual Studio 2017"
+    ["VSWHERE"]="1")'
   ["SDK5.2"]='(
     ["NAME"]="Windows Server 2003 SP1 SDK"
     ["VC_VER"]="8.0"
@@ -679,6 +683,37 @@ for i in $(reg query "$SDK_ROOT" 2>/dev/null | tr -d '\r' | sed -ne '/Windows\\v
     warning "Registry key for Windows SDK $i doesn't contain expected InstallationFolder value"
   fi
 done
+
+# Now enumerate Visual Studio 2017+ instances
+VSWHERE=$(dirname $(realpath $0))/vswhere.exe
+if [[ ! -x $VSWHERE ]] ; then
+  VSWHERE="$(printenv 'ProgramFiles(x86)')\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+  VSWHERE=$(echo $VSWHERE| cygpath -f -)
+fi
+if [[ -x $VSWHERE ]] ; then
+  debug "$VSWHERE found"
+  while IFS= read -r line; do
+    case ${line%: *} in
+      instanceId)
+        INSTANCE=${line#*: };;
+      installationPath)
+        INSTANCE_PATH=${line#*: };;
+      installationVersion)
+        INSTANCE_VER=${line#*: }
+        INSTANCE_VER=${INSTANCE_VER%.*}
+        INSTANCE_VER=${INSTANCE_VER%.*};;
+      displayName)
+        INSTANCE_NAME=${line#*: }
+        debug "Looking at $INSTANCE in $INSTANCE_PATH ($INSTANCE_VER $INSTANCE_NAME)"
+        if [[ -e "$(echo $INSTANCE_PATH| cygpath -f -)/VC/Auxiliary/Build/vcvarsall.bat" ]] ; then
+          debug "vcvarsall.bat found"
+          FOUND+=(["VS$INSTANCE_VER"]="([\"DISPLAY\"]=\"$INSTANCE_NAME\" [\"ARCH\"]=\"x86 x64\" [\"SETENV\"]=\"$INSTANCE_PATH\\VC\\Auxiliary\\Build\\vcvarsall.bat\" [\"SETENV_RELEASE\"]=\"\")")
+        else
+          warning "vcvarsall.bat not found for $INSTANCE"
+        fi;;
+    esac
+  done < <("$VSWHERE" -all -nologo | tr -d '\r')
+fi
 
 if [[ $DEBUG -gt 1 ]] ; then
   for i in "${!FOUND[@]}" ; do
