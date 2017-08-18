@@ -1,3 +1,7 @@
+2017-08-18 David Allsopp <david.allsopp -at- metastack.com>
+  Version 0.3.1
+* Complete the support for newer Cygwin tools
+
 2017-08-17 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.3.0
 * Add support for Visual Studio 2017
