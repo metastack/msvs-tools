@@ -901,7 +901,7 @@ for i in "${TEST[@]}" ; do
       ((num++))
     done < <(INCLUDE= LIB= PATH="$DIR:$PATH" \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
-             cmd /v:on /c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tail -3)
+             cmd /v:on /c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
       echo done>&2
     fi
