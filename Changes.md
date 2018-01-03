@@ -1,3 +1,7 @@
+????-??-?? David Allsopp <david.allsopp -at- metastack.com>
+  Next
+* Ensure commands run by msvs-promote-path don't write to stderr
+
 2017-08-18 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.3.1
 * Complete the support for newer Cygwin tools
