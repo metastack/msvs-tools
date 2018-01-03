@@ -325,7 +325,7 @@ if [[ $MODE -eq 1 ]] ; then
   MSVS_PREFERENCE=
   SCAN_ENV=1
 elif [[ -z ${MSVS_PREFERENCE+x} ]] ; then
-  MSVS_PREFERENCE='@;VS15.0;VS14.0;VS12.0;VS11.0;10.0;9.0;8.0;7.1;7.0'
+  MSVS_PREFERENCE='@;VS15.*;VS14.0;VS12.0;VS11.0;10.0;9.0;8.0;7.1;7.0'
 fi
 
 MSVS_PREFERENCE=${MSVS_PREFERENCE//;/ }
@@ -375,6 +375,7 @@ case $MODE in
     echo "     10.0). Visual Studio packages are always preferred ahead of SDKs."
     echo "  3. SPEC - an actual package specification. Visual Studio packages are VSmm.n"
     echo "     (e.g. VS14.0, VS7.1) and SDK packages are SDKm.n (e.g. SDK7.1)."
+    echo "     Any Visual Studio 2017 update can be selected with VS15.*"
     echo "The default behaviour is to match the environment compiler followed by the most"
     echo "recent version of the compiler."
     exit 0;;
@@ -461,7 +462,7 @@ COMPILERS=(
     ["ENV"]="140"
     ["VERSION"]="14.0"
     ["ARCH"]="x86 x64")'
-  ["VS15.0"]='(
+  ["VS15.*"]='(
     ["NAME"]="Visual Studio 2017"
     ["VSWHERE"]="1")'
   ["SDK5.2"]='(
@@ -506,7 +507,7 @@ for v in $MSVS_PREFERENCE ; do
     exit 2
   fi
   if [[ $v != "@" ]] ; then
-    if [[ -z ${COMPILERS[$v]+x} && -z ${COMPILERS["VS$v"]+x} ]] ; then
+    if [[ -z ${COMPILERS[$v]+x} && -z ${COMPILERS["VS$v"]+x} && -z ${COMPILERS[${v%.*}.*]+x} ]] ; then
       echo "$0: corrupt MSVS_PREFERENCE: unknown compiler '$v'">&2
       exit 2
     fi
@@ -585,7 +586,7 @@ fi
 # COMPILER contains each eval'd element from COMPILERS
 declare -A COMPILER
 
-# Scan for each compiler package
+# Scan the registry for compiler package (vswhere is later)
 for i in "${!COMPILERS[@]}" ; do
   eval COMPILER=${COMPILERS[$i]}
 
@@ -737,7 +738,7 @@ for i in "${!FOUND[@]}" ; do
   CANDIDATES[$i]="";
 done
 
-# For --all, act as though MSVS_PREFERENCE was "@" because this causes all packages to be tested.
+# For --all, act as though MSVS_PREFERENCE were "@" because this causes all packages to be tested.
 if [[ $MODE -eq 1 ]] ; then
   PREFER_ENV=1
   PREFERENCE=("@")
@@ -756,11 +757,22 @@ for i in $MSVS_PREFERENCE ; do
       debug "Preference @ ignored since no environment compiler selected"
     fi
   else
-    if [[ -n ${COMPILERS[$i]+x} ]] ; then
+    if [[ -n ${COMPILERS[$i]+x} || -n ${COMPILERS[${i%.*}.*]+x} ]] ; then
       if [[ -n ${CANDIDATES[$i]+x} ]] ; then
         unset CANDIDATES[$i]
         TEST+=($i)
         PREFERENCE+=($i)
+      elif [[ ${i#*.} = "*" ]] ; then
+        INSTANCES=
+        for j in "${!CANDIDATES[@]}" ; do
+          if [[ "${j%.*}.*" = $i ]] ; then
+            unset CANDIDATES[$j]
+            INSTANCES="$INSTANCES $j"
+          fi
+        done
+        INSTANCES="$(sort -r <<< "${INSTANCES// /$'\n'}")"
+        eval TEST+=($INSTANCES)
+        eval PREFERENCE+=($INSTANCES)
       fi
     else
       if [[ -n ${CANDIDATES["VS$i"]+x} ]] ; then
