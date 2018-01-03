@@ -170,9 +170,10 @@ output ()
   fi
   case "$OUTPUT" in
     0)
-      echo "$1='$VALUE'";;
+      echo "$1='${VALUE//\'/\'\"\'\"\'}'";;
     1)
-      echo "$1:=\"$VALUE\"";;
+      VALUE=${VALUE//#/\\\#}
+      echo "$1=${VALUE//\$/\$\$}";;
   esac
 }
 

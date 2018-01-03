@@ -3,6 +3,10 @@
 * Ensure commands run by msvs-promote-path don't write to stderr
 * Fix selection of Visual Studio 2017 in MSVS_PREFERENCE (updates have unique
   version numbers, which prevented automatic selection).
+* Use = instead of unnecessary := for assignment for --output=make
+* Don't add double-quotes around strings for --output=make
+* Fix escaping of single quote for --output=shell
+* Fix escaping of # and $ for --output=make
 
 2017-08-18 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.3.1
