@@ -1,5 +1,5 @@
-????-??-?? David Allsopp <david.allsopp -at- metastack.com>
-  Next
+2018-01-03 David Allsopp <david.allsopp -at- metastack.com>
+  Version 0.3.2
 * Ensure commands run by msvs-promote-path don't write to stderr
 * Fix selection of Visual Studio 2017 in MSVS_PREFERENCE (updates have unique
   version numbers, which prevented automatic selection).
