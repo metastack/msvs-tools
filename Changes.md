@@ -1,3 +1,8 @@
+????-??-?? David Allsopp <david.allsopp -at- metastack.com>
+  Next
+* Fix error excluding environment compiler when either LIB or INCLUDE is not
+  set (report from npmazzuca -at- gmail.com)
+
 2018-01-03 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.3.2
 * Ensure commands run by msvs-promote-path don't write to stderr

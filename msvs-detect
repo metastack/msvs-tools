@@ -109,6 +109,7 @@ find_in ()
 # entire runtime if only some options (e.g. Dynamic Runtime and not Static) are selected.
 check_environment ()
 {
+  debug 4 "Checking $4 ($5)"
   for tool in cl rc link ; do
     find_in "$1" $tool.exe
   done
@@ -547,21 +548,26 @@ if [[ $SCAN_ENV -eq 1 ]] ; then
       RET=0
       ENV_INC=$(env | sed -ne 's/^\(INCLUDE\)=.*/\1/pi')
       ENV_LIB=$(env | sed -ne 's/^\(LIB\)=.*/\1/pi')
-      if check_environment "${PATH//:/*}" \
-                           "${!ENV_INC//;/*}" \
-                           "${!ENV_LIB//;/*}" \
-                           "Environment C compiler" \
-                           "$ENV_ARCH" ; then
-        ENV_CL=$(which cl)
-        ENV_cl=${ENV_CL,,}
-        ENV_cl=${ENV_cl/bin\/*_/bin\/}
-        debug "Environment appears to include a compiler at $ENV_CL"
-        if [[ -n $TARGET_ARCH && $TARGET_ARCH != $ENV_ARCH ]] ; then
-          debug "But architecture doesn't match required value"
+      if [[ -z $ENV_INC || -z $ENV_LIB ]] ; then
+        warning "Microsoft C Compiler Include and/or Lib not set - Environment C compiler ($ENV_ARCH) excluded"
+        unset ENV_ARCH
+      else
+        if check_environment "${PATH//:/*}" \
+                             "${!ENV_INC//;/*}" \
+                             "${!ENV_LIB//;/*}" \
+                             "Environment C compiler" \
+                             "$ENV_ARCH" ; then
+          ENV_CL=$(which cl)
+          ENV_cl=${ENV_CL,,}
+          ENV_cl=${ENV_cl/bin\/*_/bin\/}
+          debug "Environment appears to include a compiler at $ENV_CL"
+          if [[ -n $TARGET_ARCH && $TARGET_ARCH != $ENV_ARCH ]] ; then
+            debug "But architecture doesn't match required value"
+            unset ENV_ARCH
+          fi
+        else
           unset ENV_ARCH
         fi
-      else
-        unset ENV_ARCH
       fi
     fi
   fi
