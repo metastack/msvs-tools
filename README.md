@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/xkv71sbva7v9w6ts/branch/master?svg=true)](https://ci.appveyor.com/project/dra27/msvs-tools-9m37n/branch/master)
+
 # Microsoft Visual Studio Helper Scripts
 
 Various scripts provided for integrating with the Microsoft C Compiler from Microsoft Visual Studio.
