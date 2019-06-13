@@ -27,7 +27,7 @@
 # of this software, even if advised of the possibility of such damage.                             #
 # ################################################################################################ #
 
-VERSION=0.3.2
+VERSION=0.4.0
 
 # debug [level=2] message
 debug ()

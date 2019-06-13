@@ -1,5 +1,5 @@
-????-??-?? David Allsopp <david.allsopp -at- metastack.com>
-  Next
+2019-06-13 David Allsopp <david.allsopp -at- metastack.com>
+  Version 0.4.0
 * Fix error excluding environment compiler when either LIB or INCLUDE is not
   set (report from npmazzuca -at- gmail.com)
 * Workaround MSYS2's cmd script
