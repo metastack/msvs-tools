@@ -1,0 +1,46 @@
+# ################################################################################################ #
+# MetaStack Solutions Ltd.                                                                         #
+# ################################################################################################ #
+# AppVeyor CI Configuration                                                                        #
+# ################################################################################################ #
+# Copyright (c) 2019 MetaStack Solutions Ltd.                                                      #
+# ################################################################################################ #
+# Author: David Allsopp                                                                            #
+# 13-Jun-2019                                                                                      #
+# ################################################################################################ #
+# Redistribution and use in source and binary forms, with or without modification, are permitted   #
+# provided that the following two conditions are met:                                              #
+#     1. Redistributions of source code must retain the above copyright notice, this list of       #
+#        conditions and the following disclaimer.                                                  #
+#     2. Neither the name of MetaStack Solutions Ltd. nor the names of its contributors may be     #
+#        used to endorse or promote products derived from this software without specific prior     #
+#        written permission.                                                                       #
+#                                                                                                  #
+# This software is provided by the Copyright Holder 'as is' and any express or implied warranties  #
+# including, but not limited to, the implied warranties of merchantability and fitness for a       #
+# particular purpose are disclaimed. In no event shall the Copyright Holder be liable for any      #
+# direct, indirect, incidental, special, exemplary, or consequential damages (including, but not   #
+# limited to, procurement of substitute goods or services; loss of use, data, or profits; or       #
+# business interruption) however caused and on any theory of liability, whether in contract,       #
+# strict liability, or tort (including negligence or otherwise) arising in any way out of the use  #
+# of this software, even if advised of the possibility of such damage.                             #
+# ################################################################################################ #
+
+platform:
+  - x64
+
+image: Visual Studio 2015
+
+environment:
+  CYG_ROOT: C:\cygwin64
+
+build_script:
+  - |
+    %CYG_ROOT%\bin\bash.exe -lc "$APPVEYOR_BUILD_FOLDER/msvs-detect --all"
+  - |
+    %CYG_ROOT%\bin\bash.exe -lc "eval $($APPVEYOR_BUILD_FOLDER/msvs-detect); PATH=$MSVS_PATH:$PATH cl"
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"
+  - |
+    %CYG_ROOT%\bin\bash.exe -lc "which link"
+  - |
+    %CYG_ROOT%\bin\bash.exe -lc "which link; eval $($APPVEYOR_BUILD_FOLDER/msvs-promote-path); which link; if link --version &>/dev/null ; then exit 1 ; fi"
