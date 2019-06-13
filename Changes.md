@@ -3,6 +3,7 @@
 * Fix error excluding environment compiler when either LIB or INCLUDE is not
   set (report from npmazzuca -at- gmail.com)
 * Workaround MSYS2's cmd script
+* Add support for MSYS2 bash
 
 2018-01-03 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.3.2

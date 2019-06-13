@@ -201,6 +201,13 @@ ML_REQUIRED=0
 TARGET_ARCH=
 SCAN_ENV=0
 
+if [[ $(uname --operating-system 2>/dev/null) = "Msys" ]] ; then
+  # Prevent MSYS from translating command line switches to paths
+  SWITCH_PREFIX='//'
+else
+  SWITCH_PREFIX='/'
+fi
+
 # Parse command-line. At the moment, the short option which usefully combines with anything is -d,
 # so for the time being, combining short options is not permitted, as the loop becomes even less
 # clear with getopts. GNU getopt isn't installed by default on Cygwin...
@@ -920,7 +927,7 @@ for i in "${TEST[@]}" ; do
       ((num++))
     done < <(INCLUDE= LIB= PATH="$DIR:$PATH" \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
-             $(cygpath "$COMSPEC") /v:on /c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
+             $(cygpath "$COMSPEC") ${SWITCH_PREFIX}v:on ${SWITCH_PREFIX}c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
       echo done>&2
     fi
