@@ -4,7 +4,7 @@
 # ################################################################################################ #
 # Microsoft C Compiler Environment Detection Script                                                #
 # ################################################################################################ #
-# Copyright (c) 2016, 2017, 2018 MetaStack Solutions Ltd.                                          #
+# Copyright (c) 2016, 2017, 2018, 2019 MetaStack Solutions Ltd.                                    #
 # ################################################################################################ #
 # Author: David Allsopp                                                                            #
 # 16-Feb-2016                                                                                      #
@@ -24,7 +24,7 @@
 # limited to, procurement of substitute goods or services; loss of use, data, or profits; or       #
 # business interruption) however caused and on any theory of liability, whether in contract,       #
 # strict liability, or tort (including negligence or otherwise) arising in any way out of the use  #
-# use of this software, even if advised of the possibility of such damage.                         #
+# of this software, even if advised of the possibility of such damage.                             #
 # ################################################################################################ #
 
 VERSION=0.3.2
@@ -70,7 +70,7 @@ reg64_string ()
 # Increments $RET if file does not exist in any of the directories in the *-separated list
 find_in ()
 {
-  debug 4 "Looking for $2"
+  debug 4 "Looking for $2 in $1"
   if [[ -z $1 ]] ; then
     STATUS=1
   else
@@ -920,7 +920,7 @@ for i in "${TEST[@]}" ; do
       ((num++))
     done < <(INCLUDE= LIB= PATH="$DIR:$PATH" \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
-             cmd /v:on /c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
+             $(cygpath "$COMSPEC") /v:on /c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
       echo done>&2
     fi
