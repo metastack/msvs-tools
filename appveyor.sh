@@ -25,6 +25,9 @@ if "$WHICH" cl &> /dev/null ; then
   cl &> env-cl || true
 fi
 eval $(./msvs-detect)
+echo -e "MSVS_PATH = \033[30m$MSVS_PATH\033[0m"
+echo -e "MSVS_INC = \033[30m$MSVS_INC\033[0m"
+echo -e "MSVS_LIB = \033[30m$MSVS_LIB\033[0m"
 if ! PATH="$MSVS_PATH:$PATH" "$WHICH" cl ; then
   exit 1
 else
