@@ -1,5 +1,8 @@
 ????-??-?? David Allsopp <david.allsopp -at- metastack.com>
   Next
+* Improve tail-stripping of MSVS_PATH to prevent path blow-out. More recent
+  Visual Studios add some elements for extensions to the end of PATH. This
+  should eliminate msvs-detect ever including the original PATH in MSVS_PATH
 * Erase %ORIGINALPATH% to deal with SetEnv scripts overridding PATH. Doesn't
   appear to be needed for the newer equivalent VSCMD variable
 * Ensure PATH-mangling never overrides Cygwin bin (in particular, ensure `which`

@@ -933,7 +933,7 @@ for i in "${TEST[@]}" ; do
           MSVS_INC=${line%% };;
       esac
       ((num++))
-    done < <(INCLUDE= LIB= PATH="$DIR:$PATH" ORIGINALPATH= \
+    done < <(INCLUDE= LIB= PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH= \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
              $(cygpath "$COMSPEC") ${SWITCH_PREFIX}v:on ${SWITCH_PREFIX}c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
@@ -944,9 +944,7 @@ for i in "${TEST[@]}" ; do
       # Translate MSVS_PATH back to Cygwin notation (/cygdrive, etc. and colon-separated)
       MSVS_PATH=$(cygpath "$MSVS_PATH" -p)
       # Remove any trailing / from elements of MSVS_PATH
-      MSVS_PATH=$(echo "$MSVS_PATH" | sed -e 's|\([^:]\)/\+\(:\|$\)|\1\2|g')
-      # Remove the actual PATH (and the extra $DIR added to run the script)
-      MSVS_PATH=${MSVS_PATH%:$DIR:$TRIM_PATH}
+      MSVS_PATH=$(echo "$MSVS_PATH" | sed -e 's|\([^:]\)/\+\(:\|$\)|\1\2|g;s/?msvs-detect?.*//')
       # Guarantee that MSVS_PATH ends with a single :
       MSVS_PATH="${MSVS_PATH%%:}:"
     fi
