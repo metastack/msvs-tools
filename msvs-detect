@@ -201,6 +201,9 @@ ML_REQUIRED=0
 TARGET_ARCH=
 SCAN_ENV=0
 
+# Various PATH messing around means it's sensible to know where tools are now
+WHICH=$(which which)
+
 if [[ $(uname --operating-system 2>/dev/null) = "Msys" ]] ; then
   # Prevent MSYS from translating command line switches to paths
   SWITCH_PREFIX='//'
@@ -535,7 +538,7 @@ FOUND=()
 # Scan the environment for a C compiler, and check that it's valid. Throughout the rest of the
 # script, it is assumed that if ENV_ARCH is set then there is a valid environment compiler.
 if [[ $SCAN_ENV -eq 1 ]] ; then
-  if which cl >/dev/null 2>&1 ; then
+  if "$WHICH" cl >/dev/null 2>&1 ; then
     # Determine its architecture from the Microsoft Logo line.
     ENV_ARCH=$(cl 2>&1 | head -1 | tr -d '\r')
     case "${ENV_ARCH#* for }" in
@@ -567,7 +570,7 @@ if [[ $SCAN_ENV -eq 1 ]] ; then
                              "${!ENV_LIB//;/*}" \
                              "Environment C compiler" \
                              "$ENV_ARCH" ; then
-          ENV_CL=$(which cl)
+          ENV_CL=$("$WHICH" cl)
           ENV_cl=${ENV_CL,,}
           ENV_cl=${ENV_cl/bin\/*_/bin\/}
           debug "Environment appears to include a compiler at $ENV_CL"
@@ -970,7 +973,7 @@ for i in "${TEST[@]}" ; do
 
       # Check to see if this is a match for the environment C compiler.
       if [[ -n ${ENV_ARCH+x} ]] ; then
-        TEST_cl=$(PATH="$MSVS_PATH:$PATH" which cl)
+        TEST_cl=$(PATH="$MSVS_PATH:$PATH" "$WHICH" cl)
         TEST_cl=${TEST_cl,,}
         TEST_cl=${TEST_cl/bin\/*_/bin\/}
         if [[ $TEST_cl = $ENV_cl ]] ; then

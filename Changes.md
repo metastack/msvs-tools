@@ -1,3 +1,8 @@
+????-??-?? David Allsopp <david.allsopp -at- metastack.com>
+  Next
+* Ensure PATH-mangling never overrides Cygwin bin (in particular, ensure `which`
+  is always from the same Cygwin as the script)
+
 2019-06-13 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.4.0
 * Fix error excluding environment compiler when either LIB or INCLUDE is not
