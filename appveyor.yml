@@ -35,12 +35,9 @@ environment:
   CYG_ROOT: C:\cygwin64
 
 build_script:
+  - cd %APPVEYOR_BUILD_FOLDER%
   - |
-    %CYG_ROOT%\bin\bash.exe -lc "$APPVEYOR_BUILD_FOLDER/msvs-detect --all"
+    %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh"
+  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86
   - |
-    %CYG_ROOT%\bin\bash.exe -lc "eval $($APPVEYOR_BUILD_FOLDER/msvs-detect); PATH=$MSVS_PATH:$PATH cl"
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"
-  - |
-    %CYG_ROOT%\bin\bash.exe -lc "which link"
-  - |
-    %CYG_ROOT%\bin\bash.exe -lc "which link; eval $($APPVEYOR_BUILD_FOLDER/msvs-promote-path); which link; if link --version &>/dev/null ; then exit 1 ; fi"
+    %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh env"
