@@ -933,7 +933,7 @@ for i in "${TEST[@]}" ; do
           MSVS_INC=${line%% };;
       esac
       ((num++))
-    done < <(INCLUDE= LIB= PATH="$DIR:$PATH" \
+    done < <(INCLUDE= LIB= PATH="$DIR:$PATH" ORIGINALPATH= \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
              $(cygpath "$COMSPEC") ${SWITCH_PREFIX}v:on ${SWITCH_PREFIX}c $COMMAND 2>/dev/null | fgrep XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
