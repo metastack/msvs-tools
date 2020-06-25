@@ -899,6 +899,8 @@ for i in "${TEST[@]}" ; do
     ARCHS=${COMPILER["ARCH"]}
   fi
 
+  # Remove any trailing / from elements of $PATH
+  TRIM_PATH=$(echo "$PATH" | sed -e 's|\([^:]\)/\+\(:\|$\)|\1\2|g')
   for arch in $ARCHS ; do
     # Determine the command line switch for this architecture
     if [[ -n ${ARCHINFO[$arch]+x} ]] ; then
@@ -941,8 +943,10 @@ for i in "${TEST[@]}" ; do
     if [[ -n $MSVS_PATH ]] ; then
       # Translate MSVS_PATH back to Cygwin notation (/cygdrive, etc. and colon-separated)
       MSVS_PATH=$(cygpath "$MSVS_PATH" -p)
+      # Remove any trailing / from elements of MSVS_PATH
+      MSVS_PATH=$(echo "$MSVS_PATH" | sed -e 's|\([^:]\)/\+\(:\|$\)|\1\2|g')
       # Remove the actual PATH (and the extra $DIR added to run the script)
-      MSVS_PATH=${MSVS_PATH%:$DIR:$PATH}
+      MSVS_PATH=${MSVS_PATH%:$DIR:$TRIM_PATH}
       # Guarantee that MSVS_PATH ends with a single :
       MSVS_PATH="${MSVS_PATH%%:}:"
     fi
