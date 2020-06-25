@@ -3,3 +3,4 @@
 
 msvs-detect text eol=lf
 msvs-promote-path text eol=lf
+appveyor.sh text eol=lf
