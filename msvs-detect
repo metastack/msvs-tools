@@ -899,8 +899,6 @@ for i in "${TEST[@]}" ; do
     ARCHS=${COMPILER["ARCH"]}
   fi
 
-  # Remove any trailing / from elements of $PATH
-  TRIM_PATH=$(echo "$PATH" | sed -e 's|\([^:]\)/\+\(:\|$\)|\1\2|g')
   for arch in $ARCHS ; do
     # Determine the command line switch for this architecture
     if [[ -n ${ARCHINFO[$arch]+x} ]] ; then
