@@ -76,7 +76,7 @@ find_in ()
   else
     IFS=*
     STATUS=1
-    for f in $1; do 
+    for f in $1; do
       if [[ -e "$f/$2" ]] ; then
         STATUS=0
         break
