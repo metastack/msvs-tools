@@ -87,7 +87,7 @@ find_in ()
   if [[ $STATUS -eq 1 ]] ; then
     debug 4 "$2 not found"
   fi
-  ((RET+=$STATUS))
+  ((RET+=STATUS))
 }
 
 # check_environment PATH INC LIB name arch
