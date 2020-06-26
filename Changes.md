@@ -1,5 +1,7 @@
 ????-??-?? David Allsopp <david.allsopp -at- metastack.com>
   Next
+* Apply various fixes and clarifications from shellcheck
+  (antonin.decimo -at- gmail.com)
 * Improve tail-stripping of MSVS_PATH to prevent path blow-out. More recent
   Visual Studios add some elements for extensions to the end of PATH. This
   should eliminate msvs-detect ever including the original PATH in MSVS_PATH
