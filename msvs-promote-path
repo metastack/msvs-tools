@@ -43,7 +43,7 @@ do
     T="$i"
     FIRST=0
   else
-    if [ $FOUND -eq 0 -a -x $i/link ] && [ "$($i/link --version 2>/dev/null | sed -ne "1s/Microsoft (R) Incremental Linker//p")" != "" ] ; then
+    if [ $FOUND -eq 0 ] && [ -x $i/link ] && [ "$($i/link --version 2>/dev/null | sed -ne "1s/Microsoft (R) Incremental Linker//p")" != "" ] ; then
       FOUND=1
       T="$i:$T"
       PROM=$i
