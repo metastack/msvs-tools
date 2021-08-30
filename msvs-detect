@@ -205,8 +205,13 @@ SCAN_ENV=0
 WHICH=$(which which)
 
 if [[ $(uname --operating-system 2>/dev/null) = "Msys" ]] ; then
-  # Prevent MSYS from translating command line switches to paths
-  SWITCH_PREFIX='//'
+  # Prevent MSYS from translating command line switches to paths _if_ MSYS2_ARG_CONV_EXCL
+  # has not been set
+  if [[ -n "${MSYS2_ARG_CONV_EXCL:-}" ]]; then
+    SWITCH_PREFIX='/'
+  else
+    SWITCH_PREFIX='//'
+  fi
 else
   SWITCH_PREFIX='/'
 fi
