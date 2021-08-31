@@ -977,8 +977,12 @@ for i in "${TEST[@]}" ; do
         TEST_cl=${TEST_cl,,}
         TEST_cl=${TEST_cl/bin\/*_/bin\/}
         if [[ $TEST_cl = $ENV_cl ]] ; then
-          if [[ ${!ENV_INC/"$MSVS_INC"/} != "${!ENV_INC}" && \
-                ${!ENV_LIB/"$MSVS_LIB"/} != "${!ENV_LIB}" ]] ; then
+          # Create trailing semi-colon versions of the expansions of ENV_ for comparison with MSVS_
+          ENV_EXPAND_INC="${!ENV_INC%%;};"
+          ENV_EXPAND_LIB="${!ENV_LIB%%;};"
+
+          if [[ ${ENV_EXPAND_INC/"$MSVS_INC"/} != "${ENV_EXPAND_INC}" && \
+                ${ENV_EXPAND_LIB/"$MSVS_LIB"/} != "${ENV_EXPAND_LIB}" ]] ; then
             debug "$i-$arch is a strong candidate for the Environment C compiler"
             if [[ -n ${ENV_COMPILER+x} ]] ; then
               if [[ -z ${ENV_COMPILER} ]] ; then
