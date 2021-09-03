@@ -1,5 +1,7 @@
 ????-??-?? David Allsopp <david.allsopp -at- metastack.com>
   Next
+* Handle special characters in PATH in msvs-promote-path (in particular, stray
+  double-quote characters don't corrupt the command line)
 * Fix strong/weak detection of the environment compiler (Jonah Beckford)
 * Fix the vswhere invocation to detect Build Tools (Jonah Beckford)
 
