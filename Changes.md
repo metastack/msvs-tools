@@ -1,3 +1,8 @@
+????-??-?? David Allsopp <david.allsopp -at- metastack.com>
+  Next
+* Fix strong/weak detection of the environment compiler (Jonah Beckford)
+* Fix the vswhere invocation to detect Build Tools (Jonah Beckford)
+
 2020-06-26 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.4.1
 * Apply various fixes and clarifications from shellcheck
