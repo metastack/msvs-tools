@@ -204,18 +204,6 @@ SCAN_ENV=0
 # Various PATH messing around means it's sensible to know where tools are now
 WHICH=$(which which)
 
-if [[ $(uname --operating-system 2>/dev/null) = "Msys" ]] ; then
-  # Prevent MSYS from translating command line switches to paths _if_ MSYS2_ARG_CONV_EXCL
-  # has not been set
-  if [[ -n "${MSYS2_ARG_CONV_EXCL:-}" ]]; then
-    SWITCH_PREFIX='/'
-  else
-    SWITCH_PREFIX='//'
-  fi
-else
-  SWITCH_PREFIX='/'
-fi
-
 # Parse command-line. At the moment, the short option which usefully combines with anything is -d,
 # so for the time being, combining short options is not permitted, as the loop becomes even less
 # clear with getopts. GNU getopt isn't installed by default on Cygwin...
@@ -925,6 +913,8 @@ for i in "${TEST[@]}" ; do
     if [[ $DEBUG -gt 3 ]] ; then
       printf "Scanning %s... " "$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES">&2
     fi
+    # Setting MSYS2_ARG_CONV_EXCL to * inhibits attempts to convert the flags to COMSPEC as
+    # command line parameters.
     num=0
     while IFS= read -r line; do
       case $num in
@@ -938,7 +928,8 @@ for i in "${TEST[@]}" ; do
       ((num++))
     done < <(INCLUDE='' LIB='' PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH='' \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
-             $(cygpath "$COMSPEC") ${SWITCH_PREFIX}v:on ${SWITCH_PREFIX}c $COMMAND 2>/dev/null | grep -F XMARKER -A 3 | tr -d '\015' | tail -3)
+             MSYS2_ARG_CONV_EXCL='*' \
+             $(cygpath "$COMSPEC") /v:on /c $COMMAND 2>/dev/null | grep -F XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
       echo done>&2
     fi
