@@ -1,5 +1,7 @@
 ????-??-?? David Allsopp <david.allsopp -at- metastack.com>
   Next
+* Use `MSYS2_ARG_CONV_EXCL` to disable MSYS2 argument mangling, replacing the
+  workaround in 0.4.0 (Jonah Beckford)
 * Handle special characters in PATH in msvs-promote-path (in particular, stray
   double-quote characters don't corrupt the command line)
 * Fix strong/weak detection of the environment compiler (Jonah Beckford)
