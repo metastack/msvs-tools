@@ -1,0 +1,4 @@
+share: [
+  "msvs-detect"
+  "msvs-opam"
+]

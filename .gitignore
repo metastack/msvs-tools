@@ -4,3 +4,9 @@ all-compilers
 detected-cl
 first-cl
 env-cl
+install
+clone-from
+msvs-detect.config
+conf-msvc*.conf
+conf-msvc*.install
+*.cache
