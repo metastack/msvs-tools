@@ -1,0 +1,293 @@
+#!/usr/bin/env bash
+# ################################################################################################ #
+# David Allsopp Ltd.                                                                               #
+# ################################################################################################ #
+# Microsoft C Compiler Environment Detection Script                                                #
+# ################################################################################################ #
+# Copyright (c) 2021, 2022, 2023, 2024 David Allsopp Ltd.                                          #
+# ################################################################################################ #
+# Author: David Allsopp                                                                            #
+# 24-Sep-2021                                                                                      #
+# ################################################################################################ #
+# Redistribution and use in source and binary forms, with or without modification, are permitted   #
+# provided that the following two conditions are met:                                              #
+#     1. Redistributions of source code must retain the above copyright notice, this list of       #
+#        conditions and the following disclaimer.                                                  #
+#     2. Neither the name of MetaStack Solutions Ltd. nor the names of its contributors may be     #
+#        used to endorse or promote products derived from this software without specific prior     #
+#        written permission.                                                                       #
+#                                                                                                  #
+# This software is provided by the Copyright Holder 'as is' and any express or implied warranties  #
+# including, but not limited to, the implied warranties of merchantability and fitness for a       #
+# particular purpose are disclaimed. In no event shall the Copyright Holder be liable for any      #
+# direct, indirect, incidental, special, exemplary, or consequential damages (including, but not   #
+# limited to, procurement of substitute goods or services; loss of use, data, or profits; or       #
+# business interruption) however caused and on any theory of liability, whether in contract,       #
+# strict liability, or tort (including negligence or otherwise) arising in any way out of the use  #
+# of this software, even if advised of the possibility of such damage.                             #
+# ################################################################################################ #
+
+# Run msvs-detect in opam
+# $1 = arch (x86_64 or x86_32)
+# $2 = name of package
+# $3 = location of msvs-detect
+
+arch="$1"
+package="$2"
+msvs_detect="$3"
+
+generate ()
+{
+  local package="$1"
+  local key_cache="$2"
+
+  # Create the .config and .install files
+  echo 'opam-version: "2.0"' > "$package.config"
+
+  # Generate variables (all variables are defined, even if they're empty):
+  #   msvs-bin, msvs-inc, msvs-lib - literal values to add to PATH, INCLUDE and LIB
+  #   package - description of the Visual Studio package providing the compiler
+  #   script - the script msvs-detect analysed for these results
+  #   ml - the basename of assembler (usually ml or x86 and ml64 for x64)
+  echo 'variables {' >> "$package.config"
+
+  # If an environment compiler is being used, there won't be any entries for bin, inc and lib. The
+  # values are therefore collected in an associative array to ensure that a blank entry can still be
+  # emitted.
+  # The package also needs to know when the underlying Visual Studio installation is changed, in
+  # order to invalidate its results. opam doesn't (yet) provide the ability to depend on Registry
+  # changes, so this is less perfectly done by using file-depends on key files in the installation.
+  # The files sought are:
+  #   - cl.exe - the compiler itself (all versions)
+  #   - msvcrt.lib - the C runtime library (either as main implementation or as a vcruntime shim)
+  #   - crtversion.h - contains a version string in Visual Studio 2010 onwards
+  #   - stdlib.h - exists in all versions, and used as a fallback when crtversion.h is not found
+  #   - windows.h - binds to the Windows SDK itself
+  # The principle is that if any of these files changes or disappears, then the installation has
+  # been altered. A more ideal solution would be able to bind to the installation registry keys
+  # and also to refer directly to these files being found in the search path of given values
+  # (i.e. the preference would be to able to specify the checksum of cl.exe as being "cl.exe found
+  # in the directories of msvs-bin" and the checksum of windows.h as being "windows.h found in the
+  # directories of msvs-inc").
+  declare -A ENTRIES CHECKSUMS
+  ENTRIES=(['bin']='' ['inc']='' ['lib']='')
+  line=0
+  while IFS= read -r entry
+  do
+    if [[ $line -gt 0 ]]; then
+      tag="${entry%%\**}"
+      entry="${entry#*\*}"
+    fi
+    opam_entry="$entry"
+    opam_entry="${opam_entry//\\/\\\\}"
+    opam_entry="${opam_entry//%/%%}"
+    opam_entry="${opam_entry//\"/\\\"}"
+      
+    case $line in
+      0)
+        echo "  package: \"$opam_entry\"" >> "$package.config";;
+      1)
+        echo "  script: \"$opam_entry\"" >> "$package.config";;
+      *)
+        if [[ $tag = 'asm' ]]; then
+          echo "  ml: \"$opam_entry\"" >> "$package.config"
+        else
+          case "$tag" in
+            bin)
+              if [[ -z ${CHECKSUMS['cl']+x} && -e "$entry\\cl.exe" ]]; then
+                CHECKSUMS['cl']="$entry\\cl.exe"
+              fi;;
+            inc)
+              if [[ -z ${CHECKSUMS['crtversion']+x} && -e "$entry\\crtversion.h" ]]; then
+                CHECKSUMS['crtversion']="$entry\\crtversion.h"
+              fi
+              if [[ -z ${CHECKSUMS['stdlib']+x} && -e "$entry\\stdlib.h" ]]; then
+                CHECKSUMS['stdlib']="$entry\\stdlib.h"
+              fi
+              if [[ -z ${CHECKSUMS['windows']+x} && -e "$entry\\windows.h" ]]; then
+                CHECKSUMS['windows']="$entry\\windows.h"
+              fi;;
+            lib)
+              if [[ -z ${CHECKSUMS['msvcrt']+x} && -e "$entry\\msvcrt.lib" ]]; then
+                CHECKSUMS['msvcrt']="$entry\\msvcrt.lib"
+              fi;;
+          esac
+          ENTRIES["$tag"]="${ENTRIES["$tag"]};${opam_entry//;/\";\"}"
+        fi;;
+    esac
+    ((line++))
+  done < <(cat "$key_cache")
+
+  # Emit the three variables
+  for var in "${!ENTRIES[@]}"; do
+    echo "  msvs-$var: \"${ENTRIES["$var"]#;}\"" >> "$package.config"
+  done
+
+  echo '}' >> "$package.config"
+
+  # Installation of this package _must_ yield a path to cl.exe - if CHECKSUMS doesn't yet contain an
+  # entry for cl, we're expecting to find an environment compiler.
+  if [[ -z ${CHECKSUMS['cl']} ]]; then
+    env_cl="$(command -v cl)"
+    if [[ -z $env_cl ]]; then
+      echo 'The environment and msvs-detect appear to disagree?!'>&2
+      return 1
+    else
+      CHECKSUMS['cl']="$(cygpath -w "$env_cl")"
+      # Query INCLUDE for the header files (the environment variable is Include in some versions)
+      local INCLUDE_KEY
+      INCLUDE_KEY="$(env | grep -i '^include=')"
+      INCLUDE_KEY="${INCLUDE_KEY%=*}"
+      while IFS= read -r dir; do
+        if [[ -z ${CHECKSUMS['crtversion']} && -e "$dir/crtversion.h" ]]; then
+          CHECKSUMS['crtversion']="$(cygpath -w "$dir/crtversion.h")"
+        fi
+        if [[ -z ${CHECKSUMS['stdlib']} && -e "$dir/stdlib.h" ]]; then
+          CHECKSUMS['stdlib']="$(cygpath -w "$dir/stdlib.h")"
+        fi
+        if [[ -z ${CHECKSUMS['windows']} && -e "$dir/windows.h" ]]; then
+          CHECKSUMS['windows']="$(cygpath -w "$dir/windows.h")"
+        fi
+      done < <(cygpath -p "${!INCLUDE_KEY}" | tr ':' '\n')
+      if [[ -z ${CHECKSUMS['msvcrt']} ]]; then
+        # Query LIB for msvcrt.lib (the environment variable is Lib in some versions)
+        local LIB_KEY
+        LIB_KEY="$(env | grep -i '^lib=')"
+        LIB_KEY="${LIB_KEY%=*}"
+        while IFS= read -r dir; do
+          if [[ -e "$dir/msvcrt.lib" ]]; then
+            CHECKSUMS['msvcrt']="$(cygpath -w "$dir/msvcrt.lib")"
+            break
+          fi
+        done < <(cygpath -p "${!LIB_KEY}" | tr ':' '\n')
+      fi
+    fi
+  elif [[ -n ${CHECKSUMS['cl']} ]]; then
+    # cl comes into PATH via msvs-bin. Don't bind this to file-depends, since that causes opam to a
+    # warning about cl.exe disappearing from PATH on reinstallation (for the environment compiler,
+    # this warning is of course useful).
+    unset "CHECKSUMS['cl']"
+  fi
+
+  # If crtversion.h was found, don't bind to stdlib.h
+  if [[ -n ${CHECKSUMS['crtversion']} ]]; then
+    unset "CHECKSUMS['stdlib']"
+  fi
+
+  # Emit the file-depends section
+  if [[ ${#CHECKSUMS[@]} -gt 0 ]]; then
+    echo 'file-depends: [' >> "$package.config"
+
+    for file in "${CHECKSUMS[@]}"; do
+      escaped="$file"
+      escaped="${escaped//\\/\\\\}"
+      escaped="${escaped//%/%%}"
+      checksum="$(md5sum "$file" | cut -f1 -d' ')"
+      checksum="${checksum#\\}"
+      echo "  [\"$escaped\" \"md5=$checksum\"]" >> "$package.config"
+    done
+
+    echo ']' >> "$package.config"
+  fi
+
+  # The cache file is the only thing which _needs_ to be installed. OCaml itself needs to be able
+  # to select between either conf-msvc32 or conf-msvc64 which can be trivially done by just copying
+  # either conf-msvc32.config or conf-msvc64.config. opam doesn't provide a trivial way to access
+  # the .config file, however, so it's simpler just to install them as well.
+  cat > "$package.install" <<EOF
+share: [
+  "$key_cache"
+  "$package.config"
+]
+EOF
+}
+
+# Check $arch (msvs-detect's --arch intentionally accepts opam's architecture strings)
+case "$arch" in
+  x86_64|x86_32) ;;
+  *)
+    echo "Unsupported or unrecognised architecture: $arch">&2
+    exit 2;;
+esac
+
+# The batch files which underpin the Visual Studio Tools command prompts are slow to execute,
+# typically taking a few seconds. Especially on systems which may have multiple installations of
+# Visual Studio (eccentric developers, but also CI systems). The results of msvs-detect are cached
+# in order to counter this. The output of msvs-detect is installed to a switch where the name is the
+# checksum of:
+#
+# - $arch - technically redundant, since a separate package is used for each architecture
+# - $MSVS_PREFERENCE - input used by msvs-detect to select between multiple installed versions
+# - `command -v cl` - ensures that the settings derived from an environment compiler are not
+#                     accidentally by in an environment where there isn't one (and also
+#                     disambiguates multiple different installations)
+# - `cat $msvs_detect` - the output must have been produced by the same msvs-detect script...
+# - `cat $0` - ... and this script
+# - `$msvs-detect --installed` - the list of packages initially detected by msvs-detect (this does
+#                                not run the vcvars scripts, so is much faster). Ensures that if any
+#                                installations of Visual Studio are altered, then the results are
+#                                recomputed.
+#
+# The entire mechanism can be inhibited by setting OPAMVAR_msvs_detect_nocache to a non-empty value.
+key="$({ echo "$arch-$MSVS_PREFERENCE"; \
+         command -v 'cl'; \
+         cat "$msvs_detect"; \
+         cat "$0"; \
+         bash "$msvs_detect" --installed | LC_ALL=C sort; } | md5sum | cut -f1 -d' ')"
+
+# Search opam switches for cached information
+cached_result=''
+if [[ -z $OPAMVAR_msvs_detect_nocache ]]; then
+  if command -v opam > /dev/null; then
+    # Search global and local switches via `opam switch list`
+    while IFS= read -r dir ; do
+      if [[ -d "$dir" && -e "$dir/_opam/share/$package/$key.cache" ]]; then
+        cached_result="$dir/_opam/share/$package/$key.cache"
+        break
+      elif [[ -d "$OPAMROOT/$dir/.opam-switch" && \
+              -e "$OPAMROOT/$dir/share/$package/$key.cache" ]]; then
+        cached_result="$OPAMROOT/$dir/share/$package/$key.cache"
+        break
+      fi
+    done < <(opam switch list --short 2>/dev/null | tr -d '\r')
+  elif [[ -n $OPAMROOT ]]; then
+    # opam itself not available; search global opam switches
+    while IFS= read -r dir ; do
+      cache_file="$dir/share/$package/$key.cache"
+      if [[ -e $cache_file ]]; then
+        cached_result="$cache_file"
+        break
+      fi
+    done < <(find "$OPAMROOT" -maxdepth 1 -mindepth 1 -type d)
+  fi
+fi
+
+if [[ -n $cached_result ]]; then
+  # Cached result was found, so copy it
+  cat "$cached_result" > "$key.cache"
+  # Attempt to generate the .config and .install files using it
+  if generate "$package" "$key.cache"; then
+    run_msvs_detect=0
+  else
+    # The cache file yielded incorrect results. The most likely cause here is corruption, so re-run
+    # with msvs-detect instead.
+    echo 'The cached result failed - re-running with msvs-detect' >&2
+    run_msvs_detect=1
+  fi
+else
+  # Cache disabled, or nothing found - run msvs-detect
+  run_msvs_detect=1
+fi
+
+if [[ $run_msvs_detect -eq 1 ]]; then
+  if bash "$msvs_detect" "--arch=$arch" --with-assembler --with-mt --output=data > "$key.cache" ; then
+    if ! generate "$package" "$key.cache"; then
+      exit 1
+    fi
+  else
+    echo 'No compatible Visual Studio installation was found!' >&2
+    echo 'Please install Visual Studio with at least the x64/x86 build tools' >&2
+    echo 'and Windows SDK packages. See https://visualstudio.microsoft.com/downloads/' >&2
+    exit 1
+  fi
+fi

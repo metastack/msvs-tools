@@ -1,0 +1,17 @@
+opam-version: "2.0"
+version: "0.7.0~dev"
+synopsis: "Microsoft Visual Studio environment settings detection script"
+description: """
+This package installs the msvs-detect utility from the msvs-tools package which
+can be used to find additional values required for the PATH, INCLUDE and LIB
+environment variables in order to use the Microsoft C compiler (cl).
+
+This package does not actually run the scripts; see the conf-msvc32 and
+conf-msvc64 pacakges."""
+maintainer: "David Allsopp <david.allsopp@metastack.com>"
+authors: "David Allsopp"
+license: "BSD-3-clause"
+homepage: "https://github.com/metastack/msvs-tools#readme"
+bug-reports: "https://github.com/metastack/msvs-tools/issues"
+available: os = "win32"
+dev-repo: "git+https://github.com/metastack/msvs-tools.git"

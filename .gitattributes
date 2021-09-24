@@ -2,6 +2,7 @@
 * text=auto
 
 msvs-detect text eol=lf
+msvs-opam text eol=lf
 msvs-promote-path text eol=lf
 appveyor.sh text eol=lf
 appveyor.cmd text eol=crlf
@@ -10,3 +11,6 @@ appveyor.cmd text eol=crlf
 .gitattributes export-ignore
 .gitignore export-ignore
 appveyor.* export-ignore
+
+# Don't include opam files in the release tarballs
+*.opam export-ignore
