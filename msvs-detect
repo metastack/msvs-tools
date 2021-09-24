@@ -178,6 +178,26 @@ output ()
     1)
       VALUE=${VALUE//#/\\\#}
       echo "$1=${VALUE//\$/\$\$}";;
+    2)
+      case $1 in
+        MSVS_PATH)
+          prefix='bin';;
+        MSVS_INC)
+          prefix='inc';;
+        MSVS_LIB)
+          prefix='lib';;
+        MSVS_ML)
+          prefix='asm';;
+        *)
+          echo Internal fault "$1">&2
+          exit 3;;
+      esac
+      while IFS= read -r entry; do
+        if [[ -n $entry ]] ; then
+          echo "$prefix*$entry"
+        fi
+      done <<< "${VALUE//;/$'\n'}"
+      ;;
   esac
 }
 
@@ -191,6 +211,7 @@ output ()
 # OUTPUT      --output option
 #               0 - =shell
 #               1 - =make
+#               2 - =data
 # MT_REQUIRED --with-mt
 # ML_REQUIRED --with-assembler
 # TARGET_ARCH Normalised --arch (x86, x64 or blank for both)
@@ -243,6 +264,8 @@ if [[ $# -gt 0 ]] ; then
             ;;
           make)
             OUTPUT=1;;
+          data)
+            OUTPUT=2;;
           *)
             echo "$0: unrecognised option for $1: '$2'">&2
             exit 2;;
@@ -252,6 +275,9 @@ if [[ $# -gt 0 ]] ; then
         shift;;
       -omake|--output=make)
         OUTPUT=1
+        shift;;
+      -odata|--output=data)
+        OUTPUT=2
         shift;;
       -o*)
         echo "$0: unrecognised option for -o: '${1#-o}'">&2
@@ -336,6 +362,9 @@ if [[ $MODE -eq 1 ]] ; then
   fi
   MSVS_PREFERENCE=
   SCAN_ENV=1
+elif [[ $OUTPUT -eq 2 && -z $TARGET_ARCH ]] ; then
+  echo "$0: --output=data requires --arch">&2
+  exit 2
 elif [[ -z ${MSVS_PREFERENCE+x} ]] ; then
   MSVS_PREFERENCE='@;VS17.*;VS16.*;VS15.*;VS14.0;VS12.0;VS11.0;10.0;9.0;8.0;7.1;7.0'
 fi
@@ -375,6 +404,11 @@ case $MODE in
     echo "  -o, --output=OUTPUT  Set final output. Default is shell. Valid values:"
     echo "                         shell - shell assignments, for use with eval"
     echo "                         make  - make assignments, for inclusion in a Makefile"
+    echo "                         data  - raw data, for parsing in other systems. The first"
+    echo "                                 line is the full path to the batch file which was"
+    echo "                                 analysed. The following lines are the individual"
+    echo "                                 components of MSVS_PATH, MSVS_INC and MSVS_LIB, each"
+    echo "                                 prefixed bin*, inc* or lib* respectively."
     echo "  -v, --version        Display the version"
     echo "      --with-mt        Only consider packages including the Manifest Tool"
     echo "      --with-assembler Only consider packages including an assembler"
@@ -902,15 +936,18 @@ for i in "${TEST[@]}" ; do
   fi
 
   # Determine the script to be executed and any non-architecture specific switches needed.
-  # $ENV is will contain the value of the environment variable for the compiler (empty for an SDK)
-  # which is required for Visual Studio 7.x shim later.
+  # $ENV will contain the value of the environment variable for the compiler (empty for an SDK)
+  # which is required for the Visual Studio 7.x shim later.
   SCRIPT=${COMPILER["SETENV"]}
   if [[ -n ${COMPILER["ENV"]+x} ]] ; then
     SCRIPT_SWITCHES=''
   else
     ENV=
-    SCRIPT=${COMPILER["SETENV"]}
-    SCRIPT_SWITCHES=${COMPILER["SETENV_RELEASE"]}
+    if [[ -n ${COMPILER["SETENV_RELEASE"]} ]]; then
+      SCRIPT_SWITCHES=" ${COMPILER["SETENV_RELEASE"]}"
+    else
+      SCRIPT_SWITCHES=''
+    fi
   fi
   # For reasons of escaping, the script is executed using its basename so the directory needs
   # prepending to PATH.
@@ -941,7 +978,7 @@ for i in "${TEST[@]}" ; do
     # Note that EXEC_SCRIPT must have ARCH_SWITCHES first for older Platform SDKs (newer ones parse
     # arguments properly)
     if [[ $DEBUG -gt 3 ]] ; then
-      printf "Scanning %s... " "$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES">&2
+      printf "Scanning %s... " "$(basename "$SCRIPT") $ARCH_SWITCHES$SCRIPT_SWITCHES">&2
     fi
     # Setting MSYS2_ARG_CONV_EXCL to * inhibits attempts to convert the flags to COMSPEC as
     # command line parameters.
@@ -965,7 +1002,7 @@ for i in "${TEST[@]}" ; do
       esac
       ((num++))
     done < <(INCLUDE='' LIB='' PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH='' \
-             EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
+             EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES$SCRIPT_SWITCHES" \
              MSYS2_ARG_CONV_EXCL='*' \
              $(cygpath "$COMSPEC") /d /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 6 | tr -d '\015' | tail -6)
     if [[ $VC_VERSION = '!VisualStudioVersion!' ]] ; then
@@ -979,6 +1016,7 @@ for i in "${TEST[@]}" ; do
     fi
 
     if [[ -n $MSVS_PATH ]] ; then
+      MSVS_PATH_WIN32="${MSVS_PATH/?msvs-detect?*/}"
       # Translate MSVS_PATH back to Cygwin notation (/cygdrive, etc. and colon-separated)
       MSVS_PATH=$(cygpath "$MSVS_PATH" -p)
       # Remove any trailing / from elements of MSVS_PATH
@@ -1007,8 +1045,10 @@ for i in "${TEST[@]}" ; do
       # Put the package back into FOUND, but augmented with the architecture name and with the
       # derived values.
       FOUND["$i-$arch"]="${CURRENT%)} [\"MSVS_PATH\"]=\"$MSVS_PATH\" \
+                                      [\"MSVS_PATH_WIN32\"]=\"$MSVS_PATH_WIN32\" \
                                       [\"MSVS_INC\"]=\"$MSVS_INC\" \
                                       [\"MSVS_LIB\"]=\"$MSVS_LIB\" \
+                                      [\"SETENV_SWITCHES\"]=\"$ARCH_SWITCHES$SCRIPT_SWITCHES\" \
                                       [\"VC_VERSION\"]=\"$VC_VERSION\" \
                                       [\"VSCMD_VER\"]=\"$VSCMD_VER\" \
                                       [\"ASSEMBLER\"]=\"$ASSEMBLER\")" #"# fixes vim syn match error
@@ -1126,8 +1166,18 @@ fi
 
 if [[ -n $SOLUTION ]] ; then
   eval "COMPILER=${FOUND["$SOLUTION-$LEFT_ARCH"]}"
-  output MSVS_NAME "${COMPILER["DISPLAY"]}" $LEFT_ARCH
-  output MSVS_PATH "${COMPILER["MSVS_PATH"]}" $LEFT_ARCH
+  if [[ $OUTPUT -ne 2 ]] ; then
+    output MSVS_NAME "${COMPILER["DISPLAY"]}" $LEFT_ARCH
+    output MSVS_PATH "${COMPILER["MSVS_PATH"]}" $LEFT_ARCH
+  else
+    echo "${COMPILER["DISPLAY"]} (${COMPILER["VERSION"]})"
+    cmd="${COMPILER["SETENV"]}"
+    if [[ $cmd != "${cmd% *}" ]]; then
+      cmd="\"$cmd\""
+    fi
+    echo "cmd*$cmd ${COMPILER["SETENV_SWITCHES"]}"
+    output MSVS_PATH "${COMPILER["MSVS_PATH_WIN32"]}" $LEFT_ARCH
+  fi
   output MSVS_INC "${COMPILER["MSVS_INC"]}" $LEFT_ARCH
   output MSVS_LIB "${COMPILER["MSVS_LIB"]}" $LEFT_ARCH
   if [[ $ML_REQUIRED -eq 1 ]] ; then
