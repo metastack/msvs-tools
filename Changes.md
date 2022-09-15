@@ -1,3 +1,7 @@
+????-??-?? David Allsopp <david.allsopp -at- metastack.com>
+  Next
+* Add metadata for Visual Studio 2022
+
 2021-09-06 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.5.0
 * Use `MSYS2_ARG_CONV_EXCL` to disable MSYS2 argument mangling, replacing the

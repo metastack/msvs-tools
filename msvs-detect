@@ -330,7 +330,7 @@ if [[ $MODE -eq 1 ]] ; then
   MSVS_PREFERENCE=
   SCAN_ENV=1
 elif [[ -z ${MSVS_PREFERENCE+x} ]] ; then
-  MSVS_PREFERENCE='@;VS16.*;VS15.*;VS14.0;VS12.0;VS11.0;10.0;9.0;8.0;7.1;7.0'
+  MSVS_PREFERENCE='@;VS17.*;VS16.*;VS15.*;VS14.0;VS12.0;VS11.0;10.0;9.0;8.0;7.1;7.0'
 fi
 
 MSVS_PREFERENCE=${MSVS_PREFERENCE//;/ }
@@ -472,6 +472,9 @@ COMPILERS=(
     ["VSWHERE"]="1")'
   ["VS16.*"]='(
     ["NAME"]="Visual Studio 2019"
+    ["VSWHERE"]="1")'
+  ["VS17.*"]='(
+    ["NAME"]="Visual Studio 2022"
     ["VSWHERE"]="1")'
   ["SDK5.2"]='(
     ["NAME"]="Windows Server 2003 SP1 SDK"
