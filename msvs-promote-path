@@ -5,6 +5,7 @@
 # Microsoft Linker Cygwin PATH Munging Script                                                      #
 # ################################################################################################ #
 # Copyright (c) 2015, 2016, 2018, 2019, 2020, 2021 MetaStack Solutions Ltd.                        #
+# Copyright (c) 2023 Samuel Hym                                                                    #
 # ################################################################################################ #
 # Author: David Allsopp                                                                            #
 # 23-Dec-2015                                                                                      #
@@ -27,37 +28,34 @@
 # of this software, even if advised of the possibility of such damage.                             #
 # ################################################################################################ #
 
-# Ensure that the Microsoft Linker isn't being messed up by /usr/bin/link
-if [ "$(link --version 2>/dev/null | sed -ne "1s/Microsoft (R) Incremental Linker//p")" != "" ] ; then
+# Ensure that the Microsoft Linker isn't being shadowed by /usr/bin/link
+# We expect the Microsoft Linker to be in the same directory as the C compiler
+
+if ! clpath="$(command -v cl)" ; then
+  echo "The Microsoft C compiler was not found in any of the PATH entries!">&2
+  exit 1
+fi
+clpath="${clpath%/*}"
+
+if ! linkpath="$(command -v link)" ; then
+  echo "The Microsoft Linker was not found in any of the PATH entries!">&2
+  exit 1
+fi
+
+if [ "${linkpath%/*}" = "$clpath" ]; then
   echo "link already refers to the Microsoft Linker">&2
   exit 0
 fi
 
+NEWPATH="$clpath"
 IFS=:
-T=
-FOUND=0
-FIRST=1
 for i in $PATH
 do
-  if [ $FIRST -eq 1 ] ; then
-    T="$i"
-    FIRST=0
-  else
-    if [ $FOUND -eq 0 ] && [ -x "$i/link" ] && [ "$("$i/link" --version 2>/dev/null | sed -ne "1s/Microsoft (R) Incremental Linker//p")" != "" ] ; then
-      FOUND=1
-      T="$i:$T"
-      PROM=$i
-    else
-      T="$T:$i"
-    fi
+  if [[ $i != $clpath ]]; then
+    NEWPATH="$NEWPATH:$i"
   fi
 done
 unset IFS
 
-if [ $FOUND -eq 0 ] ; then
-  echo "The Microsoft Linker was not found in any of the PATH entries!">&2
-  exit 1
-else
-  echo "$PROM moved to the front of \$PATH">&2
-  echo "export PATH='$(echo "$T" | sed -e "s/'/'\"'\"'/g")'"
-fi
+echo "$clpath moved to the front of \$PATH">&2
+echo "export PATH='"${NEWPATH//\'/\'\"\'\"\'}"'"
