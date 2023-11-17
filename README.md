@@ -69,7 +69,7 @@ to be invoked:
 eval $(msvs-promote-path)
 ```
 
-The script searches through `PATH` for link.exe and when it finds one which appears to be a
-Microsoft Linker, it moves that directory to the start of `PATH`, and also displays a message that
-it has done so. It is safe to run the command multiple times; no change is made if the first link
-encountered is a Microsoft Linker.
+The script checks whether the `cl` and `link` commands are coming from the same directory in `PATH`.
+If not, it moves the directory for `cl` to the start of `PATH`, and also displays a message that
+it has done so. It is safe to run the command multiple times, if `cl` and `link` are from the same
+directory, no change is made.
