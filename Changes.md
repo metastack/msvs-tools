@@ -1,6 +1,8 @@
 ????-??-?? David Allsopp <david.allsopp -at- metastack.com>
   Next
 * Add metadata for Visual Studio 2022
+* Simplify the search of the Microsoft Linker in `msvs-promote-path`
+  (Samuel Hym)
 
 2021-09-06 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.5.0
