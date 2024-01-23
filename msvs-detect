@@ -482,6 +482,7 @@ COMPILERS=(
   ["SDK5.2"]='(
     ["NAME"]="Windows Server 2003 SP1 SDK"
     ["VC_VER"]="8.0"
+    ["VERSION"]="5.2"
     ["REG_KEY"]="$SDK52_KEY"
     ["REG_VALUE"]="Install Dir"
     ["SETENV_RELEASE"]="/RETAIL"
@@ -649,7 +650,15 @@ for i in "${!COMPILERS[@]}" ; do
             if [[ $EXPRESS -eq 1 ]] ; then
               DISPLAY="$DISPLAY Express"
             fi
-            FOUND+=(["$i"]="$RESULT [\"DISPLAY\"]=\"$DISPLAY\" [\"IS_EXPRESS\"]=\"$EXPRESS\")")
+            ENV=VS${COMPILER["ENV"]}COMNTOOLS
+            ENV=${!ENV%\"}
+            ENV=${ENV#\"}
+            if [[ ${COMPILER["ENV"]}0 -ge 800 ]] ; then
+              SCRIPT="$(cygpath -d "$ENV")\\..\\..\\VC\\vcvarsall.bat"
+            else
+              SCRIPT="$(cygpath -d "$ENV")\\vsvars32.bat"
+            fi
+            FOUND+=(["$i"]="$RESULT [\"DISPLAY\"]=\"$DISPLAY\" [\"IS_EXPRESS\"]=\"$EXPRESS\" [\"SETENV\"]=\"$SCRIPT\")")
             debug "${COMPILER["NAME"]} accepted for further detection"
           else
             warning "$ENV doesn't agree with registry"
@@ -682,6 +691,7 @@ SDK_ROOT='HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows'
 for i in $(reg query "$SDK_ROOT" 2>/dev/null | tr -d '\r' | sed -ne '/Windows\\v/s/.*\\//p') ; do
   debug "Analysing SDK key $SDK_ROOT\\$i"
   INSTALL_DIR=$(reg_string "$SDK_ROOT\\$i" InstallationFolder)
+  VERSION=$(reg_string "$SDK_ROOT\\$i" ProductVersion)
   if [[ -n $INSTALL_DIR ]] ; then
     TEST_PATH=$(cygpath -u "$INSTALL_DIR")
     if [[ -e $TEST_PATH/Bin/SetEnv.cmd ]] ; then
@@ -693,7 +703,7 @@ for i in $(reg query "$SDK_ROOT" 2>/dev/null | tr -d '\r' | sed -ne '/Windows\\v
         DISPLAY=${COMPILER['NAME']}
       fi
       RESULT=${COMPILERS['SDK']%)}
-      FOUND+=(["SDK${i/v/}"]="$RESULT [\"DISPLAY\"]=\"$DISPLAY\" [\"SETENV\"]=\"$INSTALL_DIR\\Bin\\SetEnv.cmd\")")
+      FOUND+=(["SDK${i/v/}"]="$RESULT [\"DISPLAY\"]=\"$DISPLAY\" [\"VERSION\"]=\"$VERSION\" [\"SETENV\"]=\"$INSTALL_DIR\\Bin\\SetEnv.cmd\")")
     else
       if [[ -n ${COMPILERS["SDK${i#v}"]+x} ]] ; then
         warning "Registry set for Windows SDK $i, but SetEnv.cmd not found"
@@ -727,7 +737,7 @@ if [[ -x $VSWHERE ]] ; then
         debug "Looking at $INSTANCE in $INSTANCE_PATH ($INSTANCE_FULL_VER $INSTANCE_NAME)"
         if [[ -e "$(cygpath "$INSTANCE_PATH")/VC/Auxiliary/Build/vcvarsall.bat" ]] ; then
           debug "vcvarsall.bat found"
-          FOUND+=(["VS$INSTANCE_VER"]="([\"DISPLAY\"]=\"$INSTANCE_NAME\" [\"ARCH\"]=\"x86 x64\" [\"SETENV\"]=\"$INSTANCE_PATH\\VC\\Auxiliary\\Build\\vcvarsall.bat\" [\"SETENV_RELEASE\"]=\"\")")
+          FOUND+=(["VS$INSTANCE_VER"]="([\"DISPLAY\"]=\"$INSTANCE_NAME\" [\"VERSION\"]=\"$INSTANCE_FULL_VER\" [\"ARCH\"]=\"x86 x64\" [\"SETENV\"]=\"$INSTANCE_PATH\\VC\\Auxiliary\\Build\\vcvarsall.bat\" [\"SETENV_RELEASE\"]=\"\")")
         else
           warning "vcvarsall.bat not found for $INSTANCE"
         fi;;
@@ -872,17 +882,9 @@ for i in "${TEST[@]}" ; do
   # Determine the script to be executed and any non-architecture specific switches needed.
   # $ENV is will contain the value of the environment variable for the compiler (empty for an SDK)
   # which is required for Visual Studio 7.x shim later.
+  SCRIPT=${COMPILER["SETENV"]}
   if [[ -n ${COMPILER["ENV"]+x} ]] ; then
-    ENV=VS${COMPILER["ENV"]}COMNTOOLS
-    ENV=${!ENV%\"}
-    ENV=${ENV#\"}
-    if [[ ${COMPILER["ENV"]}0 -ge 800 ]] ; then
-      SCRIPT="$(cygpath -d "$ENV")\\..\\..\\VC\\vcvarsall.bat"
-      SCRIPT_SWITCHES=
-    else
-      SCRIPT="$(cygpath -d "$ENV")\\vsvars32.bat"
-      SCRIPT_SWITCHES=
-    fi
+    SCRIPT_SWITCHES=''
   else
     ENV=
     SCRIPT=${COMPILER["SETENV"]}
@@ -912,7 +914,7 @@ for i in "${TEST[@]}" ; do
     MSVS_LIB=
     MSVS_INC=
 
-    COMMAND='%EXEC_SCRIPT% && echo XMARKER && echo !PATH! && echo !LIB! && echo !INCLUDE!'
+    COMMAND='%EXEC_SCRIPT% && echo XMARKER && echo !PATH! && echo !LIB! && echo !INCLUDE! && echo !VCToolsVersion! && echo !VSCMD_VER! && echo !VisualStudioVersion!'
 
     # Note that EXEC_SCRIPT must have ARCH_SWITCHES first for older Platform SDKs (newer ones parse
     # arguments properly)
@@ -930,12 +932,26 @@ for i in "${TEST[@]}" ; do
           MSVS_LIB=${line%% };;
         2)
           MSVS_INC=${line%% };;
+        3)
+          VC_VERSION=${line%% };;
+        4)
+          VSCMD_VER=${line%% };;
+        5)
+          if [[ $VC_VERSION = '!VCToolsVersion!' ]] ; then
+            VC_VERSION=${line%% }
+          fi;;
       esac
       ((num++))
     done < <(INCLUDE='' LIB='' PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH='' \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
              MSYS2_ARG_CONV_EXCL='*' \
-             $(cygpath "$COMSPEC") /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 3 | tr -d '\015' | tail -3)
+             $(cygpath "$COMSPEC") /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 6 | tr -d '\015' | tail -6)
+    if [[ $VC_VERSION = '!VisualStudioVersion!' ]] ; then
+      VC_VERSION="${COMPILER["VERSION"]}"
+    fi
+    if [[ $VSCMD_VER = '!VSCMD_VER!' ]]; then
+      VSCMD_VER=''
+    fi
     if [[ $DEBUG -gt 3 ]] ; then
       echo 'done'>&2
     fi
@@ -971,6 +987,8 @@ for i in "${TEST[@]}" ; do
       FOUND["$i-$arch"]="${CURRENT%)} [\"MSVS_PATH\"]=\"$MSVS_PATH\" \
                                       [\"MSVS_INC\"]=\"$MSVS_INC\" \
                                       [\"MSVS_LIB\"]=\"$MSVS_LIB\" \
+                                      [\"VC_VERSION\"]=\"$VC_VERSION\" \
+                                      [\"VSCMD_VER\"]=\"$VSCMD_VER\" \
                                       [\"ASSEMBLER\"]=\"$ASSEMBLER\")" #"# fixes vim syn match error
 
       # Check to see if this is a match for the environment C compiler.
