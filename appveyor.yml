@@ -4,6 +4,7 @@
 # AppVeyor CI Configuration                                                                        #
 # ################################################################################################ #
 # Copyright (c) 2019, 2020 MetaStack Solutions Ltd.                                                #
+# Copyright (c) 2024 David Allsopp Ltd.                                                            #
 # ################################################################################################ #
 # Author: David Allsopp                                                                            #
 # 13-Jun-2019                                                                                      #
@@ -33,14 +34,27 @@ image: Visual Studio 2015
 
 environment:
   CYG_ROOT: C:\cygwin64
+  matrix:
+      # The Visual Studio 2015 image is VS2015 + all the compilers in the Visual Studio 2013 image
+    - job_name: Visual Studio 2015
+      appveyor_build_worker_image: Visual Studio 2015
+      ENV_COMPILER: '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
+    - job_name: Visual Studio 2017
+      appveyor_build_worker_image: Visual Studio 2017
+      ENV_COMPILER: '"C:\PROGRA~2\MICROS~3.0\Common7\Tools\..\..\VC\vcvarsall.bat" x86'
+    - job_name: Visual Studio 2019
+      appveyor_build_worker_image: Visual Studio 2019
+    - job_name: Visual Studio 2022
+      appveyor_build_worker_image: Visual Studio 2022
 
 build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
   - |
     %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh"
-  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86
   - |
-    %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh env"
+    if defined ENV_COMPILER call %ENV_COMPILER%
+  - |
+    if defined ENV_COMPILER %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh env"
 
 # Uncomment this to enable Remote Desktop on the build worker at the end of the
 # build. The worker is available for the remainder of the allocated hour.
