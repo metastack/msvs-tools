@@ -5,7 +5,7 @@
 # Microsoft C Compiler Environment Detection Script                                                #
 # ################################################################################################ #
 # Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021 MetaStack Solutions Ltd.                        #
-# Copyright (c) 2022 David Allsopp Ltd.                                                            #
+# Copyright (c) 2022, 2024 David Allsopp Ltd.                                                      #
 # ################################################################################################ #
 # Author: David Allsopp                                                                            #
 # 16-Feb-2016                                                                                      #
@@ -719,12 +719,12 @@ if [[ -x $VSWHERE ]] ; then
       installationPath)
         INSTANCE_PATH=${line#*: };;
       installationVersion)
-        INSTANCE_VER=${line#*: }
-        INSTANCE_VER=${INSTANCE_VER%.*}
+        INSTANCE_FULL_VER=${line#*: }
+        INSTANCE_VER=${INSTANCE_FULL_VER%.*}
         INSTANCE_VER=${INSTANCE_VER%.*};;
       displayName)
         INSTANCE_NAME=${line#*: }
-        debug "Looking at $INSTANCE in $INSTANCE_PATH ($INSTANCE_VER $INSTANCE_NAME)"
+        debug "Looking at $INSTANCE in $INSTANCE_PATH ($INSTANCE_FULL_VER $INSTANCE_NAME)"
         if [[ -e "$(cygpath "$INSTANCE_PATH")/VC/Auxiliary/Build/vcvarsall.bat" ]] ; then
           debug "vcvarsall.bat found"
           FOUND+=(["VS$INSTANCE_VER"]="([\"DISPLAY\"]=\"$INSTANCE_NAME\" [\"ARCH\"]=\"x86 x64\" [\"SETENV\"]=\"$INSTANCE_PATH\\VC\\Auxiliary\\Build\\vcvarsall.bat\" [\"SETENV_RELEASE\"]=\"\")")
