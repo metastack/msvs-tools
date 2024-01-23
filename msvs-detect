@@ -732,7 +732,7 @@ if [[ -x $VSWHERE ]] ; then
           warning "vcvarsall.bat not found for $INSTANCE"
         fi;;
     esac
-  done < <("$VSWHERE" -all -products '*' -nologo | tr -d '\r')
+  done < <("$VSWHERE" -all -prerelease -products '*' -nologo | tr -d '\r')
 fi
 
 if [[ $DEBUG -gt 1 ]] ; then
