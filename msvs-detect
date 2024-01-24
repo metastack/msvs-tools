@@ -185,6 +185,7 @@ output ()
 #               1 - --all
 #               2 - --help
 #               3 - --version
+#               4 - --installed
 # OUTPUT      --output option
 #               0 - =shell
 #               1 - =make
@@ -215,11 +216,14 @@ if [[ $# -gt 0 ]] ; then
       -a|--all)
         MODE=1
         shift 1;;
-      -h|--help)
+      -i|--installed)
         MODE=2
         shift;;
-      -v|--version)
+      -h|--help)
         MODE=3
+        shift;;
+      -v|--version)
+        MODE=4
         shift;;
 
       # Simple flags ($MT_REQUIRED and $ML_REQUIRED)
@@ -313,8 +317,8 @@ if [[ $# -gt 0 ]] ; then
   done
 
   if [[ -n ${1+x} ]] ; then
-    if [[ $MODE -eq 1 ]] ; then
-      echo "$0: cannot specify MSVS_PREFERENCE and --all">&2
+    if [[ $MODE -eq 1 || $MODE -eq 2 ]] ; then
+      echo "$0: cannot specify MSVS_PREFERENCE and --all or --installed">&2
       exit 2
     else
       MSVS_PREFERENCE="$*"
@@ -325,7 +329,7 @@ fi
 # Options sanitising
 if [[ $MODE -eq 1 ]] ; then
   if [[ -n $TARGET_ARCH ]] ; then
-    echo "$0: --all and --arch are mutually exclusive">&2
+    echo "$0: --all/--installed and --arch are mutually exclusive">&2
     exit 2
   fi
   MSVS_PREFERENCE=
@@ -348,7 +352,7 @@ fi
 
 NAME="Microsoft C Compiler Environment Detection Script"
 case $MODE in
-  2)
+  3)
     echo "$NAME"
     echo "Queries the environment and registry to locate Visual Studio / Windows SDK"
     echo "installations and uses their initialisation scripts (SetEnv.cmd, vcvarsall.bat,"
@@ -363,6 +367,9 @@ case $MODE in
     echo "                       to return packages containing both architectures"
     echo "  -d, --debug[=LEVEL]  Set debug messages level"
     echo "  -h, --help           Display this help screen"
+    echo "  -i, --installed      Display all detected compiler packages; similarly to --all,"
+    echo "                       except the list includes versions and may include packages"
+    echo "                       which don't include the required compiler, tools, or libraries."
     echo "  -o, --output=OUTPUT  Set final output. Default is shell. Valid values:"
     echo "                         shell - shell assignments, for use with eval"
     echo "                         make  - make assignments, for inclusion in a Makefile"
@@ -385,7 +392,7 @@ case $MODE in
     echo "The default behaviour is to match the environment compiler followed by the most"
     echo "recent version of the compiler."
     exit 0;;
-  3)
+  4)
     echo "$NAME"
     echo "Version $VERSION"
     exit 0;;
@@ -737,6 +744,9 @@ if [[ -x $VSWHERE ]] ; then
         debug "Looking at $INSTANCE in $INSTANCE_PATH ($INSTANCE_FULL_VER $INSTANCE_NAME)"
         if [[ -e "$(cygpath "$INSTANCE_PATH")/VC/Auxiliary/Build/vcvarsall.bat" ]] ; then
           debug "vcvarsall.bat found"
+          if [[ $MODE -eq 2 ]]; then
+            INSTANCE_VER="$INSTANCE_VER-$INSTANCE"
+          fi
           FOUND+=(["VS$INSTANCE_VER"]="([\"DISPLAY\"]=\"$INSTANCE_NAME\" [\"VERSION\"]=\"$INSTANCE_FULL_VER\" [\"ARCH\"]=\"x86 x64\" [\"SETENV\"]=\"$INSTANCE_PATH\\VC\\Auxiliary\\Build\\vcvarsall.bat\" [\"SETENV_RELEASE\"]=\"\")")
         else
           warning "vcvarsall.bat not found for $INSTANCE"
@@ -745,10 +755,19 @@ if [[ -x $VSWHERE ]] ; then
   done < <("$VSWHERE" -all -prerelease -products '*' -nologo | tr -d '\r')
 fi
 
-if [[ $DEBUG -gt 1 ]] ; then
+if [[ $DEBUG -gt 1 || $MODE -eq 2 ]] ; then
   for i in "${!FOUND[@]}" ; do
-    echo "Inspect $i">&2
-  done
+    if [[ $MODE -eq 2 ]]; then
+      eval "COMPILER=${FOUND["$i"]}"
+      echo "  $i (${COMPILER["VERSION"]}; ${COMPILER["SETENV"]})"
+    else
+      echo "Inspect $i">&2
+    fi
+  done | sort
+fi
+
+if [[ $MODE -eq 2 ]] ; then
+  exit 0
 fi
 
 # Basic scanning is complete, now interrogate the packages which seem to be installed and ensure
@@ -767,8 +786,9 @@ for i in "${!FOUND[@]}" ; do
   CANDIDATES[$i]="";
 done
 
-# For --all, act as though MSVS_PREFERENCE were "@" because this causes all packages to be tested.
-if [[ $MODE -eq 1 ]] ; then
+# For --all/--installed, act as though MSVS_PREFERENCE were "@" because this causes all packages to
+# be tested.
+if [[ $MODE -gt 0 ]] ; then
   PREFER_ENV=1
   PREFERENCE=("@")
 else
