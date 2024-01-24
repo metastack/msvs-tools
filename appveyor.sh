@@ -44,6 +44,9 @@ fi
 
 WHICH=$(which which)
 
+test 'Test msvs-detect --installed'
+./msvs-detect --installed
+
 test 'Test msvs-detect --all'
 ./msvs-detect --all
 
