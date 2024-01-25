@@ -34,6 +34,7 @@ image: Visual Studio 2015
 
 environment:
   CYG_ROOT: C:\cygwin64
+  CHERE_INVOKING: true
   matrix:
       # The Visual Studio 2015 image is VS2015 + all the compilers in the Visual Studio 2013 image
     - job_name: Visual Studio 2015
@@ -50,11 +51,11 @@ environment:
 build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
   - |
-    %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh"
+    %CYG_ROOT%\bin\bash.exe -lc "./appveyor.sh"
   - |
     if defined ENV_COMPILER call %ENV_COMPILER%
   - |
-    if defined ENV_COMPILER %CYG_ROOT%\bin\bash.exe -lc "cd $APPVEYOR_BUILD_FOLDER ; ./appveyor.sh env"
+    if defined ENV_COMPILER %CYG_ROOT%\bin\bash.exe -lc "./appveyor.sh env"
 
 # Uncomment this to enable Remote Desktop on the build worker at the end of the
 # build. The worker is available for the remainder of the allocated hour.

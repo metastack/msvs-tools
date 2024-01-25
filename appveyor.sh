@@ -5,6 +5,7 @@
 # AppVeyor CI Configuration                                                                        #
 # ################################################################################################ #
 # Copyright (c) 2020 MetaStack Solutions Ltd.                                                      #
+# Copyright (c) 2024 David Allsopp Ltd.                                                            #
 # ################################################################################################ #
 # Author: David Allsopp                                                                            #
 # 25-Jun-2020                                                                                      #
@@ -27,7 +28,7 @@
 # of this software, even if advised of the possibility of such damage.                             #
 # ################################################################################################ #
 
-set -e
+set -eo pipefail
 
 test ()
 {
@@ -35,12 +36,55 @@ test ()
   echo -e "\033[33m** \033[32m$1\033[0m"
 }
 
-if [[ $1 = 'env' ]] ; then
-  echo -e '\033[33mRe-running tests with an environment compiler already set\033[0m'
-  TEST_MSVS_PROMOTE_PATH=1
-else
-  TEST_MSVS_PROMOTE_PATH=0
-fi
+note ()
+{
+  echo -e "\033[36m$1\033[0m"
+}
+
+declare -A TESTS
+
+gather ()
+{
+  note "Gathering data from $2 on $3"
+  TESTS["$2-$3"]="\"$4\" $5"
+  echo -ne '\033[30m'
+  ./msvs-detect --arch=$3 --output=data -- $2 | tee "$2-$3.clean"
+  echo -ne '\033[0m'
+}
+
+matrix ()
+{
+  while IFS= read -r line; do
+    eval "gather $line"
+  done < <(grep '^-' all-compilers)
+  failed=0
+  for key in "${!TESTS[@]}"; do
+    echo
+    note "Testing with environment set for $key"
+    if command -v cl; then
+      echo 'cl in path!'>&2
+      exit 1
+    fi
+    if ! SCRIPT="${TESTS[$key]}" cmd /d /v:on /c appveyor.cmd ${key%-*} ${key#*-}; then
+      failed=1
+    fi
+    if command -v cl; then
+      echo 'cl in path!'>&2
+      exit 1
+    fi
+  done
+  if [[ $failed -eq 1 ]]; then
+    exit 1
+  fi
+}
+
+case "$1" in
+  env)
+    echo -e '\033[33mRe-running tests with an environment compiler already set\033[0m'
+    TEST_MSVS_PROMOTE_PATH=1;;
+  *)
+  TEST_MSVS_PROMOTE_PATH=0;;
+esac
 
 WHICH=$(which which)
 
@@ -48,7 +92,7 @@ test 'Test msvs-detect --installed'
 ./msvs-detect --installed
 
 test 'Test msvs-detect --all'
-./msvs-detect --all
+./msvs-detect --all | tee all-compilers
 
 test 'Ensure msvs-detect locates a compiler'
 if "$WHICH" cl &> /dev/null ; then
@@ -81,4 +125,6 @@ if [[ $TEST_MSVS_PROMOTE_PATH -eq 1 ]] ; then
   if link --version &> /dev/null ; then
     exit 1
   fi
+else
+  matrix
 fi

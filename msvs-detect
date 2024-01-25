@@ -1158,8 +1158,13 @@ fi
 
 if [[ $MODE -eq 1 ]] ; then
   echo "Installed and usable packages:"
-  for i in "${!FOUND[@]}" ; do
-    echo "  $i"
+  for key in "${!FOUND[@]}" ; do
+    eval "COMPILER=${FOUND["$key"]}"
+    switches="${COMPILER["SETENV_SWITCHES"]}"
+    if [[ $switches != "${switches% *}" ]]; then
+      switches="\"$switches\""
+    fi
+    echo "- ${key/-/ } \"${COMPILER["SETENV"]}\" $switches"
   done | sort
   exit 0
 fi
