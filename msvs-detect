@@ -164,7 +164,7 @@ check_environment ()
 # value (i.e. no change) is output.
 output ()
 {
-  if [[ $3 = $ENV_ARCH ]] ; then
+  if [[ $3 = "$ENV_ARCH" ]] ; then
     VALUE=
   else
     VALUE=$2
@@ -570,7 +570,7 @@ if [[ $SCAN_ENV -eq 1 ]] ; then
           ENV_cl=${ENV_CL,,}
           ENV_cl=${ENV_cl/bin\/*_/bin\/}
           debug "Environment appears to include a compiler at $ENV_CL"
-          if [[ -n $TARGET_ARCH && $TARGET_ARCH != $ENV_ARCH ]] ; then
+          if [[ -n $TARGET_ARCH && $TARGET_ARCH != "$ENV_ARCH" ]] ; then
             debug "But architecture doesn't match required value"
             unset ENV_ARCH
           fi
@@ -781,7 +781,7 @@ for i in $MSVS_PREFERENCE ; do
       elif [[ ${i#*.} = "*" ]] ; then
         INSTANCES=
         for j in "${!CANDIDATES[@]}" ; do
-          if [[ "${j%.*}.*" = $i ]] ; then
+          if [[ "${j%.*}.*" = "$i" ]] ; then
             unset CANDIDATES[$j]
             INSTANCES="$INSTANCES $j"
           fi
@@ -800,7 +800,7 @@ for i in $MSVS_PREFERENCE ; do
       for j in "${!COMPILERS[@]}" ; do
         eval "COMPILER=${COMPILERS["$j"]}"
         if [[ -n ${COMPILER["VC_VER"]+x} ]] ; then
-          if [[ $i = ${COMPILER["VC_VER"]} && -n ${CANDIDATES[$j]+x} ]] ; then
+          if [[ $i = "${COMPILER["VC_VER"]}" && -n ${CANDIDATES[$j]+x} ]] ; then
             unset CANDIDATES[$j]
             SDKS="$j $SDKS"
           fi
@@ -975,7 +975,7 @@ for i in "${TEST[@]}" ; do
         TEST_cl=$(PATH="$MSVS_PATH:$PATH" "$WHICH" cl)
         TEST_cl=${TEST_cl,,}
         TEST_cl=${TEST_cl/bin\/*_/bin\/}
-        if [[ $TEST_cl = $ENV_cl ]] ; then
+        if [[ $TEST_cl = "$ENV_cl" ]] ; then
           # Create trailing semi-colon versions of the expansions of ENV_ for comparison with MSVS_
           ENV_EXPAND_INC="${!ENV_INC%%;};"
           ENV_EXPAND_LIB="${!ENV_LIB%%;};"
@@ -1012,7 +1012,7 @@ for i in "${TEST[@]}" ; do
   # Does this package match the current preference? Note that PREFERENCE and TEST are constructed in
   # a cunning (and hopefully not too "You are not expected to understand this" way) such that $PREF
   # will always equal $i, unless $PREF = "@".
-  if [[ $PREF = $i ]] ; then
+  if [[ $PREF = "$i" ]] ; then
     # In which case, check that the architecture(s)s were found
     if [[ -n ${FOUND["$i-$LEFT_ARCH"]+x} && -n ${FOUND["$i-$RIGHT_ARCH"]+x} ]] ; then
       debug "Solved TARGET_ARCH=$TARGET_ARCH with $i"
