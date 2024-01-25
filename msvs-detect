@@ -578,10 +578,16 @@ done
 # Reset FOUND for later use.
 FOUND=()
 
+if "$WHICH" cl >/dev/null 2>&1 ; then
+  env_has_cl=1
+else
+  env_has_cl=0
+fi
+
 # Scan the environment for a C compiler, and check that it's valid. Throughout the rest of the
 # script, it is assumed that if ENV_ARCH is set then there is a valid environment compiler.
 if [[ $SCAN_ENV -eq 1 ]] ; then
-  if "$WHICH" cl >/dev/null 2>&1 ; then
+  if [[ $env_has_cl -eq 1 ]]; then
     # Determine its architecture from the Microsoft Logo line.
     ENV_ARCH=$(cl 2>&1 | head -1 | tr -d '\r')
     case "${ENV_ARCH#* for }" in
@@ -975,6 +981,18 @@ for i in "${TEST[@]}" ; do
 
     COMMAND='%EXEC_SCRIPT% && echo XMARKER && echo !PATH! && echo !LIB! && echo !INCLUDE! && echo !VCToolsVersion! && echo !VSCMD_VER! && echo !VisualStudioVersion!'
 
+    if [[ $env_has_cl -eq 1 ]]; then
+      if [[ -n $__VSCMD_PREINIT_PATH ]]; then
+        TEST_PATH=$(cygpath -p "$__VSCMD_PREINIT_PATH")
+      elif [[ -n $ORIGINALPATH ]]; then
+        TEST_PATH="$ORIGINALPATH"
+      else
+        TEST_PATH="$PATH"
+      fi
+    else
+      TEST_PATH="$PATH"
+    fi
+
     # Note that EXEC_SCRIPT must have ARCH_SWITCHES first for older Platform SDKs (newer ones parse
     # arguments properly)
     if [[ $DEBUG -gt 3 ]] ; then
@@ -983,6 +1001,19 @@ for i in "${TEST[@]}" ; do
     # Setting MSYS2_ARG_CONV_EXCL to * inhibits attempts to convert the flags to COMSPEC as
     # command line parameters.
     num=0
+    INCLUDE_KEY="$(env | grep -i '^include=')"
+    LIB_KEY="$(env | grep -i '^lib=')"
+    INCLUDE_KEY="${INCLUDE_KEY%=*}"
+    LIB_KEY="${LIB_KEY%=*}"
+    unset_keys=(-u ORIGINAL_PATH -u ORIGINALPATH -u TARGET_CPU -u TARGET_PLATFORM -u DevEnvDir \
+                -u VSINSTALLDIR -u VCToolsVersion -u Framework35Version \
+                -u __VSCMD_PREINIT_VCToolsVersion)
+    if [[ -n $INCLUDE_KEY ]]; then
+      unset_keys+=(-u "$INCLUDE_KEY")
+    fi
+    if [[ -n $LIB_KEY ]]; then
+      unset_keys+=(-u "$LIB_KEY")
+    fi
     while IFS= read -r line; do
       case $num in
         0)
@@ -1001,10 +1032,10 @@ for i in "${TEST[@]}" ; do
           fi;;
       esac
       ((num++))
-    done < <(INCLUDE='' LIB='' PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH='' \
-             EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES$SCRIPT_SWITCHES" \
-             MSYS2_ARG_CONV_EXCL='*' \
-             $(cygpath "$COMSPEC") /d /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 6 | tr -d '\015' | tail -6)
+    done < <(env "${unset_keys[@]}" PATH="?msvs-detect?:$DIR:/usr/bin:$TEST_PATH" \
+                 EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES$SCRIPT_SWITCHES" \
+                 MSYS2_ARG_CONV_EXCL='*' \
+             "$(cygpath "$COMSPEC")" /d /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 6 | tr -d '\015' | tail -6)
     if [[ $VC_VERSION = '!VisualStudioVersion!' ]] ; then
       VC_VERSION="${COMPILER["VERSION"]}"
     fi
