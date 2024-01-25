@@ -612,7 +612,7 @@ for i in "${!COMPILERS[@]}" ; do
     if [[ -n ${!ENV+x} ]] ; then
       debug "$ENV is a candidate"
       TEST_PATH=${!ENV%\"}
-      TEST_PATH=$(cygpath -u -f - <<< ${TEST_PATH#\"})
+      TEST_PATH=$(cygpath -u "${TEST_PATH#\"}")
       if [[ -e $TEST_PATH/vsvars32.bat ]] ; then
         debug "Directory pointed to by $ENV contains vsvars32.bat"
         EXPRESS=0
@@ -705,7 +705,7 @@ done
 VSWHERE=$(dirname $(realpath $0))/vswhere.exe
 if [[ ! -x $VSWHERE ]] ; then
   VSWHERE="$(printenv 'ProgramFiles(x86)')\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-  VSWHERE=$(echo $VSWHERE| cygpath -f -)
+  VSWHERE=$(cygpath "$VSWHERE")
 fi
 if [[ -x $VSWHERE ]] ; then
   debug "$VSWHERE found"
@@ -722,7 +722,7 @@ if [[ -x $VSWHERE ]] ; then
       displayName)
         INSTANCE_NAME=${line#*: }
         debug "Looking at $INSTANCE in $INSTANCE_PATH ($INSTANCE_VER $INSTANCE_NAME)"
-        if [[ -e "$(echo $INSTANCE_PATH| cygpath -f -)/VC/Auxiliary/Build/vcvarsall.bat" ]] ; then
+        if [[ -e "$(cygpath "$INSTANCE_PATH")/VC/Auxiliary/Build/vcvarsall.bat" ]] ; then
           debug "vcvarsall.bat found"
           FOUND+=(["VS$INSTANCE_VER"]="([\"DISPLAY\"]=\"$INSTANCE_NAME\" [\"ARCH\"]=\"x86 x64\" [\"SETENV\"]=\"$INSTANCE_PATH\\VC\\Auxiliary\\Build\\vcvarsall.bat\" [\"SETENV_RELEASE\"]=\"\")")
         else
@@ -874,10 +874,10 @@ for i in "${TEST[@]}" ; do
     ENV=${!ENV%\"}
     ENV=${ENV#\"}
     if [[ ${COMPILER["ENV"]}0 -ge 800 ]] ; then
-      SCRIPT="$(cygpath -d -f - <<< $ENV)\\..\\..\\VC\\vcvarsall.bat"
+      SCRIPT="$(cygpath -d "$ENV")\\..\\..\\VC\\vcvarsall.bat"
       SCRIPT_SWITCHES=
     else
-      SCRIPT="$(cygpath -d -f - <<< $ENV)\\vsvars32.bat"
+      SCRIPT="$(cygpath -d "$ENV")\\vsvars32.bat"
       SCRIPT_SWITCHES=
     fi
   else
@@ -887,7 +887,7 @@ for i in "${TEST[@]}" ; do
   fi
   # For reasons of escaping, the script is executed using its basename so the directory needs
   # prepending to PATH.
-  DIR=$(dirname "$SCRIPT" | cygpath -u -f -)
+  DIR=$(cygpath -u "$(dirname "$SCRIPT")")
 
   if [[ ${COMPILER["IS_EXPRESS"]} -gt 0 && -n ${COMPILER["EXPRESS_ARCH"]+x} ]] ; then
     ARCHS=${COMPILER["EXPRESS_ARCH"]}
@@ -956,7 +956,7 @@ for i in "${TEST[@]}" ; do
     if [[ ${i/.*/} = "VS7" ]] ; then
       find_in "${MSVS_PATH//:/*}" mt.exe
       if [[ $RET -eq 1 ]] ; then
-        MSVS_PATH="$MSVS_PATH$(cygpath -u -f - <<< $ENV\\Bin\\winnt):"
+        MSVS_PATH="$MSVS_PATH$(cygpath -u "$ENV\\Bin\\winnt"):"
         RET=0
       fi
     fi
