@@ -967,7 +967,7 @@ for i in "${TEST[@]}" ; do
     done < <(INCLUDE='' LIB='' PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH='' \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
              MSYS2_ARG_CONV_EXCL='*' \
-             $(cygpath "$COMSPEC") /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 6 | tr -d '\015' | tail -6)
+             $(cygpath "$COMSPEC") /d /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 6 | tr -d '\015' | tail -6)
     if [[ $VC_VERSION = '!VisualStudioVersion!' ]] ; then
       VC_VERSION="${COMPILER["VERSION"]}"
     fi
