@@ -415,7 +415,9 @@ esac
 # copied to the appropriate version. SDKs after 7.1 do not include compilers, and so are not
 # captured (as of Visual Studio 2015, the Windows SDK is official part of Visual Studio).
 declare -A COMPILERS
+# shellcheck disable=SC2034 # SDK52_KEY is used in COMPILERS which is eval'd...
 SDK52_KEY='HKLM\SOFTWARE\Microsoft\MicrosoftSDK\InstalledSDKs\8F9E5EF3-A9A5-491B-A889-C58EFFECE8B3'
+# shellcheck disable=SC2016 # ... and is therefore intentionally in a quoted string
 COMPILERS=(
   ["VS7.0"]='(
     ["NAME"]="Visual Studio .NET 2002"
