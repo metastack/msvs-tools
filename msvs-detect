@@ -932,7 +932,7 @@ for i in "${TEST[@]}" ; do
     done < <(INCLUDE='' LIB='' PATH="?msvs-detect?:$DIR:$PATH" ORIGINALPATH='' \
              EXEC_SCRIPT="$(basename "$SCRIPT") $ARCH_SWITCHES $SCRIPT_SWITCHES" \
              MSYS2_ARG_CONV_EXCL='*' \
-             $(cygpath "$COMSPEC") /v:on /c $COMMAND 2>/dev/null | grep -F XMARKER -A 3 | tr -d '\015' | tail -3)
+             $(cygpath "$COMSPEC") /v:on /c "$COMMAND" 2>/dev/null | grep -F XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
       echo 'done'>&2
     fi
