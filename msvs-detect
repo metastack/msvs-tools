@@ -1057,7 +1057,6 @@ if [[ $MODE -eq 0 ]] ; then
   if [[ -z ${SOLUTION+x} ]] ; then
     ((pref++))
     debug "Search remaining: ${PREFERENCE[*]}"
-    TEST_ARCH=$TARGET_ARCH
     for i in "${PREFERENCE[@]:$pref}" ; do
       if [[ -n ${FOUND["$i-$LEFT_ARCH"]+x} && -n ${FOUND["$i-$RIGHT_ARCH"]+x} ]] ; then
         debug "Solved TARGET_ARCH='$TARGET_ARCH' with $i"
