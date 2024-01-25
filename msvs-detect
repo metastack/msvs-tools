@@ -207,7 +207,7 @@ WHICH=$(which which)
 # Parse command-line. At the moment, the short option which usefully combines with anything is -d,
 # so for the time being, combining short options is not permitted, as the loop becomes even less
 # clear with getopts. GNU getopt isn't installed by default on Cygwin...
-if [[ $@ != "" ]] ; then
+if [[ $# -gt 0 ]] ; then
   while true ; do
     case "$1" in
       # Mode settings ($MODE)
@@ -316,7 +316,7 @@ if [[ $@ != "" ]] ; then
       echo "$0: cannot specify MSVS_PREFERENCE and --all">&2
       exit 2
     else
-      MSVS_PREFERENCE="$@"
+      MSVS_PREFERENCE="$*"
     fi
   fi
 fi
