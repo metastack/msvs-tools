@@ -58,4 +58,13 @@ done
 unset IFS
 
 echo "$clpath moved to the front of \$PATH">&2
+
+# The final step is to output
+#   export PATH='...'
+# $NEWPATH may contain single quotes, therefore this is done by disabling globbing (set -f) and
+# disabling word splitting (IFS='') and then replacing every single quote with the standard '"\'"'
+# pattern.
+set -f
+IFS=''
+# shellcheck disable=SC2027,SC2086 # set -f and IFS='' in force
 echo "export PATH='"${NEWPATH//\'/\'\"\'\"\'}"'"
