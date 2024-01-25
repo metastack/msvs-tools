@@ -1,1 +1,6 @@
 *.swp
+*.clean
+all-compilers
+detected-cl
+first-cl
+env-cl
