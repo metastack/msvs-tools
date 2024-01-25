@@ -775,14 +775,14 @@ for i in $MSVS_PREFERENCE ; do
   else
     if [[ -n ${COMPILERS[$i]+x} || -n ${COMPILERS[${i%.*}.*]+x} ]] ; then
       if [[ -n ${CANDIDATES[$i]+x} ]] ; then
-        unset CANDIDATES[$i]
-        TEST+=($i)
-        PREFERENCE+=($i)
+        unset "CANDIDATES[$i]"
+        TEST+=("$i")
+        PREFERENCE+=("$i")
       elif [[ ${i#*.} = "*" ]] ; then
         INSTANCES=
         for j in "${!CANDIDATES[@]}" ; do
           if [[ "${j%.*}.*" = "$i" ]] ; then
-            unset CANDIDATES[$j]
+            unset "CANDIDATES[$j]"
             INSTANCES="$INSTANCES $j"
           fi
         done
@@ -792,7 +792,7 @@ for i in $MSVS_PREFERENCE ; do
       fi
     else
       if [[ -n ${CANDIDATES["VS$i"]+x} ]] ; then
-        unset CANDIDATES["VS$i"]
+        unset "CANDIDATES[VS$i]"
         TEST+=("VS$i")
         PREFERENCE+=("VS$i")
       fi
@@ -801,7 +801,7 @@ for i in $MSVS_PREFERENCE ; do
         eval "COMPILER=${COMPILERS["$j"]}"
         if [[ -n ${COMPILER["VC_VER"]+x} ]] ; then
           if [[ $i = "${COMPILER["VC_VER"]}" && -n ${CANDIDATES[$j]+x} ]] ; then
-            unset CANDIDATES[$j]
+            unset "CANDIDATES[$j]"
             SDKS="$j $SDKS"
           fi
         fi
@@ -819,9 +819,9 @@ done
 # them from FOUND so that they don't accidentally get reported on later.
 for i in "${!CANDIDATES[@]}" ; do
   if [[ $PREFER_ENV -eq 1 ]] ; then
-    TEST+=($i)
+    TEST+=("$i")
   else
-    unset FOUND[$i]
+    unset "FOUND[$i]"
   fi
 done
 
@@ -856,7 +856,7 @@ for i in "${TEST[@]}" ; do
   # At the end of this process, the keys of FOUND will be augmented with the architecture found in
   # each case (so if "VS14.0" was in FOUND from the scan and both the x86 and x64 compilers are
   # valid, then at the end of this loop FOUND will contain "VS14.0-x86" and "VS14.0-x64").
-  unset FOUND[$i]
+  unset "FOUND[$i]"
 
   if [[ ${COMPILER["IS_EXPRESS"]}0 -gt 0 && -n ${COMPILER["EXPRESS_ARCH_SWITCHES"]+x} ]] ; then
     eval "ARCHINFO=${COMPILER['EXPRESS_ARCH_SWITCHES']}"
