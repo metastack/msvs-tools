@@ -702,7 +702,7 @@ for i in $(reg query "$SDK_ROOT" 2>/dev/null | tr -d '\r' | sed -ne '/Windows\\v
 done
 
 # Now enumerate Visual Studio 2017+ instances
-VSWHERE=$(dirname $(realpath $0))/vswhere.exe
+VSWHERE="$(dirname "$(realpath "$0")")/vswhere.exe"
 if [[ ! -x $VSWHERE ]] ; then
   VSWHERE="$(printenv 'ProgramFiles(x86)')\\Microsoft Visual Studio\\Installer\\vswhere.exe"
   VSWHERE=$(cygpath "$VSWHERE")
