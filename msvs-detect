@@ -74,7 +74,7 @@ find_in ()
   if [[ -z $1 ]] ; then
     STATUS=1
   else
-    IFS=*
+    IFS='*'
     STATUS=1
     for f in $1; do
       if [[ -e "$f/$2" ]] ; then
@@ -140,7 +140,7 @@ check_environment ()
   ASSEMBLER=${ASSEMBLER%86}.exe
   if [[ $ML_REQUIRED -eq 1 ]] ; then
     RET=0
-    find_in "$1" $ASSEMBLER
+    find_in "$1" "$ASSEMBLER"
     if [[ $RET -gt 0 ]] ; then
       warning "Microsoft Assembler ($ASSEMBLER) not found - $4 ($5)"
       return 1
@@ -934,7 +934,7 @@ for i in "${TEST[@]}" ; do
              MSYS2_ARG_CONV_EXCL='*' \
              $(cygpath "$COMSPEC") /v:on /c $COMMAND 2>/dev/null | grep -F XMARKER -A 3 | tr -d '\015' | tail -3)
     if [[ $DEBUG -gt 3 ]] ; then
-      echo done>&2
+      echo 'done'>&2
     fi
 
     if [[ -n $MSVS_PATH ]] ; then
@@ -962,7 +962,7 @@ for i in "${TEST[@]}" ; do
     fi
 
     # Ensure that these derived values give a valid compiler.
-    if check_environment "${MSVS_PATH//:/*}" "${MSVS_INC//;/*}" "${MSVS_LIB//;/*}" "$i" $arch ; then
+    if check_environment "${MSVS_PATH//:/*}" "${MSVS_INC//;/*}" "${MSVS_LIB//;/*}" "$i" "$arch" ; then
       # Put the package back into FOUND, but augmented with the architecture name and with the
       # derived values.
       FOUND["$i-$arch"]="${CURRENT%)} [\"MSVS_PATH\"]=\"$MSVS_PATH\" \
@@ -1041,7 +1041,7 @@ FLIP=(["x86"]="x64" ["x64"]="x86")
 
 if [[ $MODE -eq 0 ]] ; then
   if [[ $PREF = "@" && -n ${ENV_COMPILER} ]] ; then
-    SOLUTION=${ENV_COMPILER%-$ENV_ARCH}
+    SOLUTION=${ENV_COMPILER%-"$ENV_ARCH"}
     # If --arch wasn't specified, then ensure that the other architecture was also found. If --arch
     # was specified, then validate that the compiler was valid. This should always happen, unless
     # something went wrong running the script to get MSVS_PATH, MSVS_LIB and MSVS_INC.
