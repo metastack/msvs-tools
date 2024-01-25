@@ -42,7 +42,7 @@ if ! linkpath="$(command -v link)" ; then
   exit 1
 fi
 
-if [ "${linkpath%/*}" = "$clpath" ]; then
+if [[ ${linkpath%/*} = "$clpath" ]]; then
   echo "link already refers to the Microsoft Linker">&2
   exit 0
 fi
@@ -51,7 +51,7 @@ NEWPATH="$clpath"
 IFS=:
 for i in $PATH
 do
-  if [[ $i != $clpath ]]; then
+  if [[ $i != "$clpath" ]]; then
     NEWPATH="$NEWPATH:$i"
   fi
 done
