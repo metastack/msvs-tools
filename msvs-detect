@@ -1203,7 +1203,7 @@ fi
 if [[ -n $SOLUTION ]] ; then
   eval "COMPILER=${FOUND["$SOLUTION-$LEFT_ARCH"]}"
   if [[ $OUTPUT -ne 2 ]] ; then
-    output MSVS_NAME "${COMPILER["DISPLAY"]}" $LEFT_ARCH
+    output MSVS_NAME "${COMPILER["DISPLAY"]}" "always"
     output MSVS_PATH "${COMPILER["MSVS_PATH"]}" $LEFT_ARCH
   else
     echo "${COMPILER["DISPLAY"]} (${COMPILER["VERSION"]})"
