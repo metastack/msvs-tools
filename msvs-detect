@@ -289,19 +289,19 @@ if [[ $# -gt 0 ]] ; then
       # -x, --arch ($TARGET_ARCH)
       -x|--arch)
         case "$2" in
-          86|x86)
+          86|x86|x86_32)
             TARGET_ARCH=x86;;
-          64|x64)
+          64|x64|x86_64)
             TARGET_ARCH=x64;;
           *)
             echo "$0: unrecognised option for $1: '$2'">&2
             exit 2
         esac
         shift 2;;
-      -x86|-xx86|--arch=x86|--arch=86)
+      -x86|-xx86|-xx86_32|--arch=x86|--arch=86|--arch=x86_32)
         TARGET_ARCH=x86
         shift;;
-      -x64|-xx64|--arch=x64|--arch=64)
+      -x64|-xx64|-xx86_64|--arch=x64|--arch=64|--arch=x86_64)
         TARGET_ARCH=x64
         shift;;
       -x*)
