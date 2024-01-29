@@ -5,3 +5,8 @@ msvs-detect text eol=lf
 msvs-promote-path text eol=lf
 appveyor.sh text eol=lf
 appveyor.cmd text eol=crlf
+
+# Exclude infrastructure files from the tarballs
+.gitattributes export-ignore
+.gitignore export-ignore
+appveyor.* export-ignore
