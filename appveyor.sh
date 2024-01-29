@@ -52,6 +52,18 @@ gather ()
   echo -ne '\033[0m'
 }
 
+display_env ()
+{
+  echo "MSVS_NAME = $MSVS_NAME"
+  echo -ne 'MSVS_PATH = \033[30m'
+  echo -n "$MSVS_PATH"
+  echo -ne '\033[0m\nMSVS_INC = \033[30m'
+  echo -n "$MSVS_INC"
+  echo -ne '\033[0m\nMSVS_LIB = \033[30m'
+  echo -n "$MSVS_LIB"
+  echo -e '\033[0m'
+}
+
 matrix ()
 {
   while IFS= read -r line; do
@@ -81,9 +93,9 @@ matrix ()
 case "$1" in
   env)
     echo -e '\033[33mRe-running tests with an environment compiler already set\033[0m'
-    TEST_MSVS_PROMOTE_PATH=1;;
+    TEST_ENVIRONMENT=1;;
   *)
-  TEST_MSVS_PROMOTE_PATH=0;;
+  TEST_ENVIRONMENT=0;;
 esac
 
 WHICH=$(which which)
@@ -99,9 +111,7 @@ if "$WHICH" cl &> /dev/null ; then
   cl &> env-cl || true
 fi
 eval $(./msvs-detect)
-echo -e "MSVS_PATH = \033[30m$MSVS_PATH\033[0m"
-echo -e "MSVS_INC = \033[30m$MSVS_INC\033[0m"
-echo -e "MSVS_LIB = \033[30m$MSVS_LIB\033[0m"
+display_env
 if ! PATH="$MSVS_PATH:$PATH" "$WHICH" cl ; then
   exit 1
 else
@@ -115,9 +125,26 @@ if [[ -e env-cl ]] ; then
   test 'Ensure msvs-detect prefers the environment compiler'
   diff env-cl detected-cl
   diff -q first-cl detected-cl &> /dev/null && exit 1
+  echo "First run: $(cat first-cl)"
+  echo "Environment: $(cat env-cl)"
+  echo "Second run: $(cat detected-cl)"
 fi
 
-if [[ $TEST_MSVS_PROMOTE_PATH -eq 1 ]] ; then
+if [[ $TEST_ENVIRONMENT -eq 1 ]] ; then
+  test 'Ensure msvs-detect prefers the same release as the environment compiler'
+  REQUIRED_RELEASE="$MSVS_NAME"
+  if ! eval $(./msvs-detect --arch=x64); then
+    echo 'msvs-detect failed to detect an x64 compiler'>&2
+    exit 1
+  elif [[ $MSVS_NAME != "$REQUIRED_RELEASE" ]]; then
+    echo "Environment compiler: $REQUIRED_RELEASE">&2
+    echo "Complementary x64 cl: $MSVS_NAME">&2
+    echo 'These should be identical'>&2
+    exit 1
+  else
+   display_env
+  fi
+
   test 'Test msvs-promote-path'
   echo "link is currently: $("$WHICH" link)"
   eval $(./msvs-promote-path)

@@ -623,9 +623,12 @@ if [[ $SCAN_ENV -eq 1 ]] ; then
           ENV_cl=${ENV_CL,,}
           ENV_cl=${ENV_cl/bin\/*_/bin\/}
           debug "Environment appears to include a compiler at $ENV_CL"
+          # It doesn't matter whether the architecture matches - when the full probe happens in the
+          # next loop, the corresponding architecture should then be selected (so, for example, if
+          # the environment compiler is x86 VS2017, but VS2022 is installed, then by default the
+          # compiler returned for x64 is VS2017's x64 compiler, not VS2022's).
           if [[ -n $TARGET_ARCH && $TARGET_ARCH != "$ENV_ARCH" ]] ; then
             debug "But architecture doesn't match required value"
-            unset ENV_ARCH
           fi
         else
           unset ENV_ARCH
