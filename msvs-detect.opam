@@ -1,5 +1,5 @@
 opam-version: "2.0"
-version: "0.7.0~dev"
+version: "0.7.0"
 synopsis: "Microsoft Visual Studio environment settings detection script"
 description: """
 This package installs the msvs-detect utility from the msvs-tools package which

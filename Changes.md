@@ -1,3 +1,15 @@
+2024-03-08 David Allsopp <david.allsopp -at- metastack.com>
+  Version 0.7.0
+* Various shellcheck overhauls and other hardening
+* Preview versions are now included
+* New option `--installed` which quickly displays the results of the scan,
+  but doesn't probe any of the installations it finds
+* New option `--output=data` which feeds into opam packaging of msvs-detect
+* Various fixes to the behaviour with an environment compiler. `MSVS_NAME` is
+  now always defined, the detection of environment compilers is improved and
+  the `--arch` option now always prefers to find the complementary compiler from
+  the environment, if possible.
+
 2023-11-21 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.6.0
 * Add metadata for Visual Studio 2022
