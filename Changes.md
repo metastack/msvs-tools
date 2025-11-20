@@ -1,3 +1,7 @@
+2025-11-20 David Allsopp <david.allsopp -at- metastack.com>
+  Version 0.8.0
+* Add metadata for Visual Studio 2026
+
 2024-03-08 David Allsopp <david.allsopp -at- metastack.com>
   Version 0.7.0
 * Various shellcheck overhauls and other hardening

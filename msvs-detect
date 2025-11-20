@@ -5,7 +5,7 @@
 # Microsoft C Compiler Environment Detection Script                                                #
 # ################################################################################################ #
 # Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021 MetaStack Solutions Ltd.                        #
-# Copyright (c) 2022, 2024 David Allsopp Ltd.                                                      #
+# Copyright (c) 2022, 2024, 2025 David Allsopp Ltd.                                                #
 # ################################################################################################ #
 # Author: David Allsopp                                                                            #
 # 16-Feb-2016                                                                                      #
@@ -28,7 +28,7 @@
 # of this software, even if advised of the possibility of such damage.                             #
 # ################################################################################################ #
 
-VERSION=0.7.1~dev
+VERSION=0.8.0
 
 set -f
 
