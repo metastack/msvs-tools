@@ -24,7 +24,7 @@ bug-reports: "https://github.com/metastack/msvs-tools/issues"
 depends: ["msvs-detect"]
 available: os = "win32"
 flags: conf
-build: ["bash" "%{msvs-detect:share}%\\msvs-opam" "x86_32" name "%{msvs-detect:share}%\\msvs-detect"]
+build: ["pwsh" "-NoProfile" "-File" "%{msvs-detect:share}%\\msvs-opam.ps1" "x86_32" name "%{msvs-detect:share}%\\msvs-detect.ps1"]
 post-messages: [
   """
 A suitable Visual Studio installation could not be found for x86.
